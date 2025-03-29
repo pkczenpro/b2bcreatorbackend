@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Test</title>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        #messages {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Socket.IO Test</h1>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message" />
+    <button id="sendButton">Send</button>
+
+    <script>
+        // Generate a unique ID for each tab to act as the sender
+        const userId = (window.name || "creator") === "creator" ? "creator" : "brand"; // If no window name is set, default to "creator"
+
+        // Connect to the Socket.IO server
+        const socket = io("http://localhost:8000"); // Change port if needed
+
+        // Listen for messages from the server
+        socket.on("receiveMessage", (message) => {
+            const messagesDiv = document.getElementById("messages");
+            messagesDiv.innerHTML += `<p><strong>${message.senderId}:</strong> ${message.message}</p>`;
+        });
+
+        // Send message when the user clicks the 'Send' button
+        document.getElementById("sendButton").addEventListener("click", () => {
+            const messageInput = document.getElementById("messageInput");
+            const message = messageInput.value;
+            const receiverId = userId === "creator" ? "brand" : "creator"; // Toggle receiver based on sender
+
+            if (message) {
+                const data = {
+                    senderId: userId, // Use the userId ("creator" or "brand")
+                    receiverId: receiverId, // Use the opposite userId as receiver
+                    message: message
+                };
+                socket.emit("sendMessage", data);
+                messageInput.value = ""; // Clear input field
+            }
+        });
+
+        // Register the user (either "creator" or "brand")
+        socket.emit("register", userId); // Register the sender
+
+        // Listen for the window name change (in case you change the tab from one to another)
+        window.addEventListener("beforeunload", () => {
+            socket.emit("disconnect", userId); // Optionally handle disconnect
+        });
+    </script>
+</body>
+
+</html>
