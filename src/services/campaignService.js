@@ -307,7 +307,7 @@ const CampaignService = {
         if (!accessToken) {
             return { message: "LinkedIn access token not found", error_code: 400 };
         }
-        
+
         const apiUrl = `https://api.linkedin.com/rest/reactions/${contentId}`;
         const response = await fetch(apiUrl, {
             method: "GET",
@@ -327,7 +327,51 @@ const CampaignService = {
             console.error("LinkedIn Analytics Error:", responseData);
             return { message: "Failed to get LinkedIn analytics", error: responseData };
         }
-    }
+    },
+
+    async getCampaignAnalytics(req, campaignId) {
+        try {
+            const userId = req.user.id;
+
+            // Check if the user is a brand
+            const user = await User.findById(userId);
+            if (!user || user.userType !== "brand") {
+                throw new Error("Unauthorized access");
+            }
+
+
+            const campaign = await Campaign.findById(campaignId)
+                .populate("brandId", "name email profileImage socialMediaLinks")
+                .populate("selectedCreators.creatorId", "name email profileImage");
+
+            if (!campaign) {
+                throw new Error("Campaign not found");
+            }
+
+            const analytics = {
+                totalCreators: campaign.selectedCreators.length,
+                completedCreators: campaign.selectedCreators.filter(
+                    (c) => c.status === "done"
+                ).length,
+                pendingCreators: campaign.selectedCreators.filter(
+                    (c) => c.status === "pending"
+                ).length,
+                rejectedCreators: campaign.selectedCreators.filter(
+                    (c) => c.status === "rejected"
+                ).length,
+                totalContent: campaign.selectedCreators.reduce(
+                    (acc, creator) => acc + creator.content.length,
+                    0
+                ),
+            };
+
+            return { campaign, analytics };
+        }
+        catch (ex) {
+            console.log(ex);
+            throw new Error("Campaign not found");
+        }
+    },
 };
 
 export default CampaignService;

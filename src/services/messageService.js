@@ -1,4 +1,5 @@
 import Message from '../models/message.js';
+import User from '../models/user.js';
 
 const MessageService = {
 
@@ -94,7 +95,33 @@ const MessageService = {
         } catch (error) {
             throw new Error("Error fetching chat list: " + error.message);
         }
+    },
+
+
+    async getContactWithUsers(user_id) {
+        try {
+            const user = await User.findById(user_id);
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            // Fetch contacts as plain objects (allows modification)
+            const contacts = await User.find().select("_id name profileImage").lean();
+            // Loop through contacts and add the last message to each contact
+            contacts.forEach(contact => {
+                contact.image = contact.profileImage || process.env.DOMAIN + "/default.png";  // Set image
+                delete contact.profileImage;  // Remove original profileImage field
+            });
+
+            console.log(contacts);
+            return contacts;
+        } catch (ex) {
+            throw new Error("Error fetching contact with users: " + ex.message);
+        }
     }
+
+
+
 }
 
 export default MessageService;

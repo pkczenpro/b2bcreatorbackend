@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Campaign from "./campaign.js";
+import { faker } from "@faker-js/faker";
 
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -14,8 +15,8 @@ const userSchema = new mongoose.Schema({
     isCompletedOnboarding: { type: Boolean, required: true, default: false },
     userType: { type: String, required: false },  // creator or brand
     profileName: { type: String, required: false },
-    profileImage: { type: String, required: false },
-    coverImage: { type: String, required: false },
+    profileImage: { type: String, required: false, default: process.env.DOMAIN + "/default.png" },
+    coverImage: { type: String, required: false, default: faker.image.urlPicsumPhotos() },
     socialMediaLinks: [
         {
             platform: { type: String, required: false }, // e.g., "google", "linkedin", "facebook"

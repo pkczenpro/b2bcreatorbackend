@@ -189,6 +189,16 @@ export const getLinkedInAnalytics = async (req, res) => {
     }
 }
 
+export const getCampaignAnalytics = async (req, res) => {
+    try {
+        const campaignId = req.params.campaignId;
+        const analytics = await CampaignService.getCampaignAnalytics(req, campaignId);
+        res.status(200).json(analytics);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
 export default {
     createCampaign,
     getAllCampaigns,
@@ -206,5 +216,6 @@ export default {
     submitWork,
     generateCampaignPostContent,
     acceptWork,
-    getLinkedInAnalytics
+    getLinkedInAnalytics,
+    getCampaignAnalytics
 };

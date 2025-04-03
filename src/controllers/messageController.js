@@ -51,8 +51,19 @@ export const getChatList = async (req, res) => {
     }
 }
 
+export const contactWithUsers = async (req, res) => {
+    const user_id = req.user.id;
+    try {
+        const chatList = await MessageService.getContactWithUsers(user_id);
+        res.status(200).json(chatList);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
 export default {
     fetchMessages,
     sendMessage,
     getChatList,
+    contactWithUsers,
 };

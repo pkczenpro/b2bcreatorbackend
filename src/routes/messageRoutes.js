@@ -14,4 +14,7 @@ router.post('/', authenticate, messageController.sendMessage);
 // Get chat list for a user
 router.get('/chatlist', authenticate, messageController.getChatList);
 
+// Get contact list for a user
+router.get('/contactlist', authenticate, messageController.contactWithUsers);
+
 export default router;

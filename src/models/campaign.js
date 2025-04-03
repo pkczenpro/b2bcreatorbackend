@@ -17,7 +17,7 @@ const campaignSchema = new mongoose.Schema(
         selectedCreators: [
             {
                 creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the creator
-                status: { type: String, enum: ["pending", "active", "done"], default: "pending" }, // Status of collaboration
+                status: { type: String, default: "pending" }, // Status of collaboration
                 amount: { type: Number, required: false }, // Amount allocated for this creator
                 approved: { type: Boolean, default: false }, // Approval status
                 content: [
@@ -30,6 +30,8 @@ const campaignSchema = new mongoose.Schema(
                         createdAt: { type: Date, default: Date.now },
                     },
                 ],
+                createDate: { type: Date, default: Date.now }, // Date when the creator was selected
+                updatedAt: { type: Date, default: Date.now }, // Date when the creator was last updated
             },
         ],
     },

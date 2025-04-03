@@ -188,7 +188,7 @@ const UserController = {
                 location: creator.location || "",
                 userType: creator.userType || "",
                 profileName: creator.profileName || "",
-                profileImage: creator.profileImage || "",
+                profileImage: creator.profileImage || process.env.DOMAIN + "/default.png",
                 coverImage: creator.coverImage || "",
                 socialMediaLinks: creator.socialMediaLinks || [],
                 bio: creator.bio || "",

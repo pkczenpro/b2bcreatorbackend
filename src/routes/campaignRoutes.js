@@ -63,4 +63,7 @@ router.post('/generate-post', authenticate, CampaignController.generateCampaignP
 // get post analytics from linkedin
 router.get('/linkedin-analytics/:contentId', authenticate, CampaignController.getLinkedInAnalytics);
 
+// get campaign analytics
+router.get('/analytics/:campaignId', authenticate, CampaignController.getCampaignAnalytics);
+
 export default router;

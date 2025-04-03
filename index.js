@@ -40,6 +40,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
     setHeaders: (res) => res.set("Cross-Origin-Resource-Policy", "cross-origin")
 }));
 
+// static public folder
+app.use(express.static(path.join(__dirname, "public"), {
+    setHeaders: (res) => res.set("Cross-Origin-Resource-Policy", "cross-origin")
+}));
+
 // Routes
 app.use("/api", routes);
 app.get("/", (req, res) => res.send("Hello World"));

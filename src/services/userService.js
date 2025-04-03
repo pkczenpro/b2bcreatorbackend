@@ -8,6 +8,7 @@ import { sendEmail } from "../utils/sendEmail.js";
 import validateFieldData from "../utils/validateSchemas.js";
 import mongoose, { get } from "mongoose";
 import crypto from "crypto";
+import { faker } from "@faker-js/faker";
 
 const emailRE = /\S+@\S+\.\S+/;
 
@@ -156,7 +157,7 @@ const UserService = {
                         email: userEmail,
                         name: linkedInUser.data.name,
                         userType,
-                        profileImage: linkedInUser.data.picture,
+                        profileImage: linkedInUser.data.picture || process.env.DOMAIN + "/default.png",
                         location: linkedInUser.data.locale.country,
                         email_verified: linkedInUser.data.email_verified,
                         linkedin: {
@@ -232,7 +233,7 @@ const UserService = {
                     email: googleUser.email,
                     name: googleUser.name,
                     userType,
-                    profileImage: googleUser.picture,
+                    profileImage: googleUser.picture || process.env.DOMAIN + "/default.png",
                     email_verified: googleUser.verified_email,
                 });
             }
@@ -270,6 +271,10 @@ const UserService = {
 
         if (req.body.tags) {
             updatedUserData.tags = req.body.tags.split(",") || [];
+        }
+
+        if (req.body.socialMediaLinks) {
+            updatedUserData.socialMediaLinks = JSON.parse(req.body.socialMediaLinks) || [];
         }
 
         // Hash password only if it's provided and not empty
@@ -385,7 +390,7 @@ const UserService = {
         // Handle file uploads (profileImage, coverImage)
         if (profileImage) {
             updatedUserData.profileImage = `/uploads/${profileImage.filename}`;
-        }
+        } 
         if (coverImage) {
             updatedUserData.coverImage = `/uploads/${coverImage.filename}`;
         }
@@ -480,7 +485,7 @@ const UserService = {
                                     ...creator._doc, // Keep the original creator data
                                     name: user.name,
                                     email: user.email,
-                                    profileImage: user.profileImage,
+                                    profileImage: user.profileImage || process.env.DOMAIN + "/default.png",
                                     coverImage: user.coverImage,
                                     bio: user.bio,
                                     tags: user.tags,
