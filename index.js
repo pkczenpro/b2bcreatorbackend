@@ -10,7 +10,6 @@ import passport from "passport";
 import session from "express-session";
 import path from "path";
 import fs from "fs";
-
 import routes from "./src/routes/index.js";
 
 // Load environment variables
@@ -21,7 +20,7 @@ const __dirname = path.resolve();
 // Initialize Express app
 const app = express();
 // HTTPS Configuration
-const pathToCert = "/etc/letsencrypt/live/mdmlife.it/";
+const pathToCert = "/etc/letsencrypt/live/b2b-api.peakalign.app/";
 const options = {
   cert: fs.readFileSync(`${pathToCert}fullchain.pem`),
   key: fs.readFileSync(`${pathToCert}privkey.pem`),
@@ -84,3 +83,5 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Start Server
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
