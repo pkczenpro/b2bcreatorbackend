@@ -19,13 +19,17 @@ const __dirname = path.resolve();
 
 // Initialize Express app
 const app = express();
-// HTTPS Configuration
+
+
+// SOCKET IO CONFIG FOR SERVER ACTIVATE ONCE DEPLOYING
 const pathToCert = "/etc/letsencrypt/live/b2b-api.peakalign.app/";
 const options = {
   cert: fs.readFileSync(`${pathToCert}fullchain.pem`),
   key: fs.readFileSync(`${pathToCert}privkey.pem`),
 };
 const server = http.createServer(options, app);
+
+// const server = http.createServer(app);
 
 // Socket.IO setup
 const io = new SocketIo(server, {

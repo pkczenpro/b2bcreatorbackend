@@ -104,6 +104,7 @@ const MessageService = {
                         message: 1,
                         timestamp: 1,
                         isRead: 1,
+                        userType: "$user.userType",
                     },
                 },
 
@@ -145,6 +146,7 @@ const MessageService = {
                     ...contact,
                     image: contact.profileImage || defaultImage,
                     profileImage: undefined, // remove profileImage
+                    userType: contact.userType, // remove userType
                 }));
 
             return contacts;
