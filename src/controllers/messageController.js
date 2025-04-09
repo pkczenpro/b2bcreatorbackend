@@ -41,6 +41,22 @@ export const sendMessage = async (req, res) => {
     }
 };
 
+export const markMessagesAsRead = async (req, res) => {
+    const { sender, receiver } = req.body;
+    const user_id = req.user.id;
+
+    if (!sender || !receiver) {
+        return res.status(400).json({ error: 'Sender and Receiver are required' });
+    }
+
+    try {
+        await MessageService.markMessagesAsRead(sender, receiver);
+        res.status(200).json({ message: 'Messages marked as read' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
 export const getChatList = async (req, res) => {
     const user_id = req.user.id;
     try {
@@ -54,7 +70,7 @@ export const getChatList = async (req, res) => {
 export const contactWithUsers = async (req, res) => {
     const user_id = req.user.id;
     try {
-        const chatList = await MessageService.getContactWithUsers(user_id);
+        const chatList = await MessageService.getContactWithUsers(req, user_id);
         res.status(200).json(chatList);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -66,4 +82,5 @@ export default {
     sendMessage,
     getChatList,
     contactWithUsers,
+    markMessagesAsRead
 };

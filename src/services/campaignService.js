@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Campaign from "../models/campaign.js";
 import User from "../models/user.js";
 import { shareLinkedIn } from "../utils/shareLinkedIn.js";
+import NotificationService from "./notificationService.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const CampaignService = {
@@ -32,6 +33,7 @@ const CampaignService = {
      * Get a single campaign by ID
      */
     async getCampaignById(campaignId, brandId) {
+        console.log(campaignId);
         const campaign = await Campaign.findById(campaignId)
             .populate("brandId", "name email")
             .populate("selectedCreators.creatorId", "name email profileImage");
@@ -67,8 +69,9 @@ const CampaignService = {
         return campaign;
     },
 
-    async addToCampaign(campaignId, creatorData) {
+    async addToCampaign(req, campaignId, creatorData) {
         const { creatorId, amount, status = "prospect" } = creatorData;
+
 
         if (!mongoose.Types.ObjectId.isValid(campaignId)) {
             throw new Error("Invalid Campaign ID");
@@ -79,14 +82,22 @@ const CampaignService = {
         if (!campaign) throw new Error("Campaign not found");
 
         // Check if the creator is already added
-        const alreadyAdded = campaign.selectedCreators.some(
-            (c) => c.creatorId.toString() === creatorId.toString()
-        );
-        if (alreadyAdded) throw new Error("Creator is already added");
+        // const alreadyAdded = campaign.selectedCreators.some(
+        //     (c) => c.creatorId.toString() === creatorId.toString()
+        // );
+        // if (alreadyAdded) throw new Error("Creator is already added");
 
         // Add creator
         campaign.selectedCreators.push({ creatorId, amount, status });
         await campaign.save();
+
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            creatorId, // receiver
+            `You have been added to a campaign: ` + campaign.title,
+            "/dashboard/campaigns",
+        );
 
         return campaign;
     },
@@ -229,7 +240,7 @@ const CampaignService = {
 
         // Find the creator in the selectedCreators list
         const selectedCreator = campaign.selectedCreators.find(
-            (c) => c.creatorId.toString() === creatorId
+            (c) => c.creatorId?.toString() === creatorId
         );
         if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
 
@@ -240,6 +251,8 @@ const CampaignService = {
         const user = await User.findById(creatorId);
         if (!user) throw new Error("Creator not found");
 
+
+        //todo frontend part if no access token redirect to get linkedin token
         if (user?.linkedin?.access_token === null || user?.linkedin?.access_token === undefined) {
             return {
                 message: "Creator has not linked their LinkedIn account",
@@ -258,6 +271,27 @@ const CampaignService = {
         });
 
         await campaign.save();
+
+
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            req.params.creatorId, // receiver
+            `You have submitted your work for the campaign "${campaign.title}"`,
+            "/dashboard/campaigns",
+        );
+
+        // Send notification to the brand
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            campaign.brandId, // receiver
+            `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
+            "/dashboard/campaigns",
+        );
+
+
+
         return campaign;
     },
 
@@ -331,19 +365,19 @@ const CampaignService = {
 
     async getCampaignAnalytics(req, campaignId) {
         try {
-            const userId = req.user.id;
+            // const userId = req.user.id;
 
             // Check if the user is a brand
-            const user = await User.findById(userId);
-            if (!user || user.userType !== "brand") {
-                throw new Error("Unauthorized access");
-            }
+            // const user = await User.findById(userId);
+            // if (!user || user.userType !== "brand") {
+            //     throw new Error("Unauthorized access");
+            // }
 
-
+            console.log(campaignId);
             const campaign = await Campaign.findById(campaignId)
                 .populate("brandId", "name email profileImage socialMediaLinks")
                 .populate("selectedCreators.creatorId", "name email profileImage");
-
+            console.log(campaign);
             if (!campaign) {
                 throw new Error("Campaign not found");
             }

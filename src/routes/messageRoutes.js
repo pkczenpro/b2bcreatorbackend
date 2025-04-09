@@ -11,6 +11,9 @@ router.get('/', authenticate, messageController.fetchMessages);
 // Send a new message
 router.post('/', authenticate, messageController.sendMessage);
 
+// Mark messages as read
+router.post('/read', authenticate, messageController.markMessagesAsRead);
+
 // Get chat list for a user
 router.get('/chatlist', authenticate, messageController.getChatList);
 

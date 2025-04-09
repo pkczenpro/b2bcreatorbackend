@@ -1,25 +1,25 @@
 import "dotenv/config";
-import OpenAI from "openai";
+import { ChatOpenAI } from "@langchain/openai";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const llm = new ChatOpenAI({
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  modelName: "gpt-4",
+  temperature: 0.7,
+});
 
 const generatePost = async (prompt) => {
-    try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4",
-            messages: [
-                { role: "system", content: "You are a helpful AI that generates engaging social media posts for linkedin in linkedin style." },
-                { role: "user", content: prompt }
-            ],
-            temperature: 0.7,
-            max_tokens: 200,
-        });
+  try {
+    const response = await llm.invoke([
+      new SystemMessage("You are a helpful AI that generates engaging social media posts for LinkedIn in LinkedIn style."),
+      new HumanMessage(prompt),
+    ]);
 
-        return response.choices[0]?.message?.content.trim();
-    } catch (error) {
-        console.error("OpenAI Error:", error);
-        throw new Error("Failed to generate post");
-    }
+    return response.content.trim();
+  } catch (error) {
+    console.error("Langchain OpenAI Error:", error);
+    throw new Error("Failed to generate post");
+  }
 };
 
 export default generatePost;

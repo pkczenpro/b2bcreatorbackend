@@ -1,6 +1,9 @@
 import campaign from "../models/campaign.js";
 import CampaignService from "../services/campaignService.js";
+import NotificationService from "../services/notificationService.js";
 import generatePost from "../services/openAiServices.js";
+
+
 
 export const createCampaign = async (req, res) => {
     try {
@@ -18,12 +21,12 @@ export const getAllCampaigns = async (req, res) => {
     try {
         const campaigns = await CampaignService.getAllCampaigns();
         const data = campaigns.map(campaign => ({
-            id: campaign._id,
-            title: campaign.title,
-            company: campaign.brandId.name,
-            image: campaign.brandId.profileImage,
-            description: campaign.description,
-            channels: campaign.brandId.socialMediaLinks.map(link => link.value ? link.platform : null).filter(Boolean).join(", ")
+            id: campaign?._id,
+            title: campaign?.title,
+            company: campaign?.brandId?.name || null,
+            image: campaign?.brandId?.profileImage,
+            description: campaign?.description,
+            channels: campaign?.brandId?.socialMediaLinks.map(link => link?.value ? link?.platform : null).filter(Boolean).join(", ")
         }));
 
         const randomizedData = data.sort(() => Math.random() - 0.5);
@@ -31,6 +34,7 @@ export const getAllCampaigns = async (req, res) => {
 
         res.status(200).json(randomizedData);
     } catch (error) {
+        console.error("Error fetching campaigns:", error);
         res.status(400).json({ error: error.message });
     }
 };
@@ -61,6 +65,15 @@ export const applyToCampaign = async (req, res) => {
 export const removeCreator = async (req, res) => {
     try {
         const campaign = await CampaignService.removeCreator(req.params.campaignId, req.params.creatorId);
+
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            req.params.creatorId, // receiver
+            `You have been removed from the campaign "${campaign.title}"`,
+            "/dashboard/campaigns",
+        );
+
         res.status(200).json(campaign);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -70,6 +83,15 @@ export const removeCreator = async (req, res) => {
 export const selectCreator = async (req, res) => {
     try {
         const campaign = await CampaignService.selectCreator(req.params.campaignId, req.body);
+
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            req.body.creatorId, // receiver
+            `You have been selected for the campaign "${campaign.title}"`,
+            "/dashboard/campaigns",
+        );
+
         res.status(200).json(campaign);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -129,7 +151,7 @@ export const getRelatedCampaignsForCreator = async (req, res) => {
 
 export const addToCampaign = async (req, res) => {
     try {
-        const campaign = await CampaignService.addToCampaign(req.params.campaignId, req.body);
+        const campaign = await CampaignService.addToCampaign(req, req.params.campaignId, req.body);
         res.status(200).json(campaign);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -139,6 +161,15 @@ export const addToCampaign = async (req, res) => {
 export const acceptCreator = async (req, res) => {
     try {
         const campaign = await CampaignService.acceptCreator(req.params.campaignId, req.params.creatorId, req.params.status);
+
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            req.params.creatorId, // receiver
+            `You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
+            "/dashboard/campaigns",
+        );
+
         res.status(200).json(campaign);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -148,8 +179,12 @@ export const acceptCreator = async (req, res) => {
 export const submitWork = async (req, res) => {
     try {
         const campaign = await CampaignService.submitWork(req, req.params.campaignId, req.params.creatorId, req.body);
+        if (campaign?.error_code === 400) {
+            return res.status(400).json({ error: campaign?.message });
+        }
         res.status(200).json(campaign);
     } catch (error) {
+        console.error("Error submitting work:", error);
         res.status(500).json({ error: error.message });
     }
 }
@@ -157,6 +192,15 @@ export const submitWork = async (req, res) => {
 export const acceptWork = async (req, res) => {
     try {
         const campaign = await CampaignService.acceptWork(req.params.campaignId, req.params.creatorId, req.body.contentId);
+
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            req.params.creatorId, // receiver
+            `Your work for the campaign "${campaign.title}" has been accepted`,
+            "/dashboard/campaigns",
+        );
+
         res.status(200).json(campaign);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -170,14 +214,18 @@ export const generateCampaignPostContent = async (req, res) => {
         const camp = await campaign.findById(selectedCampaign);
         if (!camp) throw new Error("Campaign not found");
 
-        const campaignPrompt = "Generate from these few words a post about the campaign --> This is prompt from user: " + prompt + " and campaign JSON object (details of it) is: " + camp;
+        const campaignPrompt = `Generate a post using linkedIn style for linkedin about the campaign using the following details:
+        - User Prompt: ${prompt}
+        - Campaign Details: ${JSON.stringify(camp)}`;
 
         const post = await generatePost(campaignPrompt);
+
         res.status(200).json({ post });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
-}
+};
+
 
 export const getLinkedInAnalytics = async (req, res) => {
     try {
@@ -192,12 +240,105 @@ export const getLinkedInAnalytics = async (req, res) => {
 export const getCampaignAnalytics = async (req, res) => {
     try {
         const campaignId = req.params.campaignId;
+        console.log("Campaign ID:", campaignId);
         const analytics = await CampaignService.getCampaignAnalytics(req, campaignId);
         res.status(200).json(analytics);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 }
+
+
+
+export const generateCarouselMakerContent = async (req, res) => {
+    const { posts, campaignId, aiPrompt } = req.body;
+
+    try {
+        const campaignData = await campaign.findById(campaignId);
+
+        if (!campaignData) {
+            return res.status(404).json({ error: "Campaign not found" });
+        }
+
+        const results = await Promise.all(posts.map(async (post) => {
+            const prompt = `
+            You are a creative AI expert in designing engaging LinkedIn carousel content.
+            
+            ## Objective:
+            Based on the provided JSON data structure, generate a professional and visually appealing carousel post for LinkedIn.
+            
+            ---
+            
+            ## Context:
+            Campaign Name: ${campaignData.title}
+            
+            Creator's Notes & Style Guide: 
+            ${aiPrompt}
+            
+            ---
+            
+            ## Data Structure Provided:
+            ${JSON.stringify(post.postData, null, 2)}
+            
+            ---
+            
+            ## Instructions:
+            
+            1. Fill empty "label" fields with creative and suitable content.
+            2. Improve existing "label" texts to sound professional, engaging, and LinkedIn-friendly.
+            3. Add relevant emojis only when it enhances the message.
+            4. Modify design properties to support the content, such as:
+               - "fontSize"
+               - "color"
+               - "textAlign"
+               - "hidden" (set to true if element feels unnecessary)
+            5. Feel free to modify:
+               - "bgColor" for better visual impact
+               - "editableButton" text to drive action
+            6. Keep the JSON structure *exactly the same*. Do not add or remove keys.
+            7. Use concise, punchy language ideal for carousel consumption.
+            8. Ensure consistency across slides (title-tone-design alignment).
+            9. Ensure fontSize for title label is const fontSize = Math.max(32, 64 - [value of item].length);
+            
+            ---
+            
+            ## Output Rules:
+            - Respond with ONLY the updated JSON.
+            - No extra explanation or notes.
+            - Valid JSON only.
+            
+            Let's begin creating an outstanding carousel!
+            `;
+
+
+            const contentPrompt = await generatePost(prompt);
+
+
+            console.log("Generated content:", contentPrompt);
+
+            let newPostData;
+            try {
+                newPostData = JSON.parse(contentPrompt);
+            } catch (err) {
+                console.error("Failed to parse GPT response for post index:", post.index);
+                throw new Error("Invalid GPT response format.");
+            }
+
+            return {
+                ...post,
+                postData: newPostData,
+            };
+        }));
+
+        res.status(200).json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
 
 export default {
     createCampaign,
@@ -217,5 +358,6 @@ export default {
     generateCampaignPostContent,
     acceptWork,
     getLinkedInAnalytics,
-    getCampaignAnalytics
+    getCampaignAnalytics,
+    generateCarouselMakerContent
 };

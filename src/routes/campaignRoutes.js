@@ -47,7 +47,8 @@ router.put('/:campaignId/creators/:creatorId/:status', authenticateBrand, Campai
 
 // Submit work for a campaign
 router.post(
-    '/:campaignId/creators/:creatorId/submit', authenticate,
+    '/:campaignId/creators/:creatorId/submit',
+    authenticate,
     upload.fields([
         { name: "images", maxCount: 10 },
     ]),
@@ -64,6 +65,9 @@ router.post('/generate-post', authenticate, CampaignController.generateCampaignP
 router.get('/linkedin-analytics/:contentId', authenticate, CampaignController.getLinkedInAnalytics);
 
 // get campaign analytics
-router.get('/analytics/:campaignId', authenticate, CampaignController.getCampaignAnalytics);
+router.get('/analytics/:campaignId', CampaignController.getCampaignAnalytics);
+
+// generate carousel maker content
+router.post('/generate-carousel', authenticate, CampaignController.generateCarouselMakerContent);
 
 export default router;

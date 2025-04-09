@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import passport from "passport";
 import session from "express-session";
 import path from "path";
+import fs from "fs";
 
 import routes from "./src/routes/index.js";
 
@@ -19,7 +20,13 @@ const __dirname = path.resolve();
 
 // Initialize Express app
 const app = express();
-const server = http.createServer(app);
+// HTTPS Configuration
+const pathToCert = "/etc/letsencrypt/live/mdmlife.it/";
+const options = {
+  cert: fs.readFileSync(`${pathToCert}fullchain.pem`),
+  key: fs.readFileSync(`${pathToCert}privkey.pem`),
+};
+const server = http.createServer(options, app);
 
 // Socket.IO setup
 const io = new SocketIo(server, {
@@ -69,6 +76,7 @@ io.on("connection", (socket) => {
     });
 });
 
+app.set('io', io);
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB Connected: ", new Date()))
