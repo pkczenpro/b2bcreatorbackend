@@ -88,7 +88,11 @@ const UserController = {
         try {
             const user_id = req.user.id
             const user = await UserService.getUserDetails(user_id);
-            res.json(user._doc);
+            console.log(user)
+            res.json({
+                ...user._doc,
+                unreadMessages: user.unReadMessages,
+            });
         } catch (error) {
             res.status(404).json({ error: error.message });
         }
@@ -223,6 +227,9 @@ const UserController = {
                     image: creator.profileImage || "",
                     description: creator.bio || "",
                     tags: creator.tags || [],
+                    category: creator.category || "",
+                    subCategory: creator.subCategory || "",
+                    socialMediaLinks: creator.socialMediaLinks || [],
                 };
             });
             res.json(data);

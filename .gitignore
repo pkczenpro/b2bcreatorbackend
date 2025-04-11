@@ -36,6 +36,7 @@ Thumbs.db
 # Build files
 dist/
 build/
+uploads/
 .cache/
 .next/
 out/

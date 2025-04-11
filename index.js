@@ -74,22 +74,24 @@ io.on("connection", (socket) => {
         socket.join(userId); // Join user-specific room
     });
 
-    socket.on("send_message", ({ sender, receiver, message, timestamp }) => {
-        console.log(`Message from ${sender} to ${receiver}: ${message}`);
-
-        // Emit the message to the receiver's room
-        io.to(receiver).emit("message", {
-            from: sender,
-            text: message,
-            isSender: false,
-            createdAt: timestamp
-        });
-    });
+    // socket.on("send_message", ({ sender, receiver, message, timestamp }) => {
+    //     console.log(`Message from ${sender} to ${receiver}: ${message}`);
+    //     // Emit the message to the receiver's room
+    //     io.to(receiver).emit("message", {
+    //         from: sender,
+    //         text: message,
+    //         isSender: false,
+    //         createdAt: timestamp
+    //     });
+    // });
 
     socket.on("disconnect", () => {
         console.log("A user disconnected:", socket.id);
     });
 });
+
+// Socket.IO instance
+app.set("io", io);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)

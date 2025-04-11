@@ -107,6 +107,9 @@ const userSchema = new mongoose.Schema({
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
+    category: { type: String, required: false }, // e.g., "tech", "lifestyle", "travel"
+    subCategory: { type: String, required: false }, // e.g., "software", "gadgets", "travel tips"
+
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);

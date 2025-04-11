@@ -1,3 +1,4 @@
+import Message from "../models/message.js";
 import User from "../models/user.js";
 
 const UserRepository = {
@@ -31,6 +32,14 @@ const UserRepository = {
             verificationToken,
             verificationTokenExpires: { $gt: new Date() },
         });
+    },
+
+    async findUnReadMessages(userId) {
+        const unreadMessages = await Message.find({
+            receiver: userId,
+            isRead: false,
+        }).populate("sender", "profileName profileImage");
+        return unreadMessages;
     }
 };
 

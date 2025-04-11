@@ -34,7 +34,7 @@ export const sendMessage = async (req, res) => {
         return res.status(400).json({ error: 'Sender, Receiver, and Message are required' });
     }
     try {
-        const newMessage = await MessageService.saveMessage(sender, receiver, message);
+        const newMessage = await MessageService.saveMessage(req, sender, receiver, message);
         res.status(201).json(newMessage);
     } catch (error) {
         res.status(500).json({ error: error.message });

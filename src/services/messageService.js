@@ -25,7 +25,7 @@ const MessageService = {
         }
     },
 
-    async saveMessage(sender, receiver, message) {
+    async saveMessage(req, sender, receiver, message) {
         try {
             const newMessage = new Message({
                 sender,
@@ -33,7 +33,27 @@ const MessageService = {
                 message,
             });
 
+            const isFirstMessage = await Message.findOne({
+                sender: receiver,
+                receiver: sender,
+                isRead: false,
+            });
+
             await newMessage.save();
+            const io = req.app.get('io');
+            console.log("io", io);
+            if (io) {
+                io.to(receiver.toString()).emit('message', {
+                    from: sender,
+                    text: message,
+                    isSender: false,
+                    createdAt: newMessage.timestamp,
+                    isFirstMessage: !isFirstMessage,
+                });
+
+                console.log("Message sent to receiver:", receiver);
+            }
+
             return newMessage;
         } catch (error) {
             throw new Error('Error saving message');
@@ -55,67 +75,81 @@ const MessageService = {
         try {
             const chatList = await Message.aggregate([
                 // Match messages where the user is either sender or receiver
-                { $match: { $or: [{ sender: user_id }, { receiver: user_id }] } },
+                {
+                    $match: {
+                        $or: [{ sender: user_id }, { receiver: user_id }]
+                    }
+                },
 
                 // Sort messages in descending order by timestamp
                 { $sort: { timestamp: -1 } },
 
-                // Group by conversation partner (other user)
+                // Group by conversation partner (the other user)
                 {
                     $group: {
                         _id: {
                             $cond: [
                                 { $eq: ["$sender", user_id] },
                                 "$receiver",
-                                "$sender",
-                            ],
+                                "$sender"
+                            ]
                         },
                         message: { $first: "$message" },
                         timestamp: { $first: "$timestamp" },
-                        isRead: { $first: "$isRead" },  // Include read status in the group stage
-                    },
-                },
-
-                // Convert _id to ObjectId (Ensures proper lookup)
-                {
-                    $addFields: {
-                        _id: { $toObjectId: "$_id" }
+                        sender: { $first: "$sender" },
+                        receiver: { $first: "$receiver" },
+                        isReadRaw: { $first: "$isRead" }
                     }
                 },
 
-                // Lookup user details from Users collection
+                // Determine isRead from the perspective of the current user
+                {
+                    $addFields: {
+                        isRead: {
+                            $cond: [
+                                { $eq: ["$receiver", user_id] },
+                                "$isReadRaw",  // If the latest message was received, use its isRead
+                                true           // If the user sent the latest message, consider it read
+                            ]
+                        },
+                        _id: { $toObjectId: "$_id" }  // Convert for lookup
+                    }
+                },
+
+                // Lookup user details
                 {
                     $lookup: {
                         from: "users",
                         localField: "_id",
                         foreignField: "_id",
-                        as: "user",
-                    },
+                        as: "user"
+                    }
                 },
                 { $unwind: "$user" },
 
-                // Project required fields
+                // Select final fields
                 {
                     $project: {
-                        // _id: 0,
                         _id: "$user._id",
                         name: "$user.name",
                         image: "$user.profileImage",
                         message: 1,
                         timestamp: 1,
                         isRead: 1,
-                        userType: "$user.userType",
-                    },
-                },
-
-                // Sort first by read status (false = unread first), then by timestamp
-                {
-                    $sort: {
-                        isRead: 1,  // Unread messages first
-                        timestamp: -1,  // Then sort by timestamp (latest first)
+                        userType: "$user.userType"
                     }
                 },
+
+                // Sort by unread first, then by timestamp
+                {
+                    $sort: {
+                        isRead: 1,
+                        timestamp: -1
+                    }
+                }
             ]);
+
+            console.log("Chat List:", chatList);
 
             return chatList;
         } catch (error) {
@@ -123,6 +157,7 @@ const MessageService = {
         }
     },
     
+
     async getContactWithUsers(req) {
         try {
             const user = req.user;

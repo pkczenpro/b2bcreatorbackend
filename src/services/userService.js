@@ -291,10 +291,16 @@ const UserService = {
     // New service for fetching a user's details
     async getUserDetails(userId) {
         const user = await UserRepository.findUserById(userId);
+
         if (!user) throw new Error("User not found");
 
+        const unReadMessages = await UserRepository.findUnReadMessages(userId);
+
+        console.log("unReadMessages", unReadMessages);
         // Optionally exclude sensitive data such as password
         const { password, ...userDetails } = user;
+
+        userDetails.unReadMessages = unReadMessages.length;
 
         return userDetails;
     },
@@ -379,6 +385,18 @@ const UserService = {
             }
         }
 
+        if (!req.body.category) {
+            throw new Error("Category is required");
+        }
+
+        if (!req.body.location) {
+            throw new Error("Location is required");
+        }
+
+        if (!req.body.subCategory) {
+            throw new Error("Subcategory is required");
+        }
+
         // Prepare updated user data, including file handling
         const updatedUserData = {
             ...user.toObject(), // Convert Mongoose document to plain object
@@ -390,7 +408,7 @@ const UserService = {
         // Handle file uploads (profileImage, coverImage)
         if (profileImage) {
             updatedUserData.profileImage = `/uploads/${profileImage.filename}`;
-        } 
+        }
         if (coverImage) {
             updatedUserData.coverImage = `/uploads/${coverImage.filename}`;
         }
