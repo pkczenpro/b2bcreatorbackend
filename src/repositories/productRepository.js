@@ -23,7 +23,7 @@ const productRepository = {
 
     delete: async (id) => {
         return await Product.findByIdAndDelete(id);
-    }
+    },
 };
 
 export default productRepository;

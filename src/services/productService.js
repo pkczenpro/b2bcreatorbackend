@@ -23,7 +23,9 @@ const productService = {
 
     deleteProduct: async (id) => {
         return await productRepository.delete(id);
-    }
+    },
+
+
 
 
 };
