@@ -23,7 +23,7 @@ const isProduction = process.env.DOMAIN === "https://b2b-api.peakalign.app";
 
 // Create HTTP or HTTPS server
 const server = isProduction
-    ? https.createServer({
+    ? http.createServer({
         cert: fs.readFileSync("/etc/letsencrypt/live/b2b-api.peakalign.app/fullchain.pem"),
         key: fs.readFileSync("/etc/letsencrypt/live/b2b-api.peakalign.app/privkey.pem"),
     }, app)

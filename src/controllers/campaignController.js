@@ -1,4 +1,7 @@
 import campaign from "../models/campaign.js";
+import user from "../models/user.js";
+import productRepository from "../repositories/productRepository.js";
+import UserRepository from "../repositories/userRepository.js";
 import CampaignService from "../services/campaignService.js";
 import NotificationService from "../services/notificationService.js";
 import generatePost from "../services/openAiServices.js";
@@ -208,10 +211,16 @@ export const acceptWork = async (req, res) => {
 }
 export const generateCampaignPostContent = async (req, res) => {
     try {
-        const { prompt, selectedCampaign, hookType, brandName } = req.body;
+        const { prompt, selectedCampaign, hookType } = req.body;
 
         const camp = await campaign.findById(selectedCampaign);
         if (!camp) throw new Error("Campaign not found");
+
+        const brand = await UserRepository.findUserById(camp.brandId);
+        if (!brand) throw new Error("Brand not found");
+
+        const brandName = brand.name;
+
 
         // Generate ideas based on hook types for dynamic brand name
         let hookIdeas = {
@@ -251,12 +260,15 @@ export const generateCampaignPostContent = async (req, res) => {
         - Selected Hook Type: ${hookType}
         - Hook Ideas: ${selectedHookIdeas.join(", ")}
         - Campaign Details: ${camp.title}
-        - Make sure the post is not more than 300 words and is tailored for LinkedIn to drive awareness for the ${brandName} brand.`;
+        - Make sure the post is not more than 300 words and is tailored for LinkedIn to drive awareness for the ${brandName} brand.
+        - Add emojies to make it more engaging.
+        `;
 
         const post = await generatePost(campaignPrompt);
 
         res.status(200).json({ post });
     } catch (error) {
+        console.log("Error generating campaign post content:", error);
         res.status(400).json({ error: error.message });
     }
 };
