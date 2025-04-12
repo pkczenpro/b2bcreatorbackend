@@ -224,29 +224,29 @@ export const generateCampaignPostContent = async (req, res) => {
         // Generate ideas based on hook types for dynamic brand name
         let hookIdeas = {
             "Trending and Timely Hook": [
-                `Why HR leaders are choosing ${brandName} Assessment in 2025 – the most trusted tool for recruitment in an AI-driven world.`,
-                `The latest trend in employee assessments – discover how ${brandName} Assessment is reshaping talent acquisition.`,
-                `In today’s hiring landscape, ${brandName} Assessment is a game-changer. Here's why you need to know about it.`
+                `Why HR leaders are choosing ${brandName}  in 2025 – the most trusted tool for recruitment in an AI-driven world.`,
+                `The latest trend in employee s – discover how ${brandName}  is reshaping talent acquisition.`,
+                `In today’s hiring landscape, ${brandName}  is a game-changer. Here's why you need to know about it.`
             ],
             "Value Driven Hook": [
-                `Save time and hire the right talent faster with ${brandName} Assessment – the ultimate hiring tool for smarter decisions.`,
-                `Maximize your hiring success – learn how ${brandName} Assessment delivers real results for companies worldwide.`,
-                `Unlock insights to hire better with ${brandName} Assessment – see how it can transform your recruitment process.`
+                `Save time and hire the right talent faster with ${brandName}  – the ultimate hiring tool for smarter decisions.`,
+                `Maximize your hiring success – learn how ${brandName}  delivers real results for companies worldwide.`,
+                `Unlock insights to hire better with ${brandName}  – see how it can transform your recruitment process.`
             ],
             "Curiosity Driven Hook": [
-                `What if you could predict employee success before hiring them? With ${brandName} Assessment, you can!`,
-                `What’s the secret behind hiring top talent? Discover how ${brandName} Assessment is changing the recruitment game.`,
-                `Ever wondered how the most successful companies select their employees? The answer lies in ${brandName} Assessment.`
+                `What if you could predict employee success before hiring them? With ${brandName} , you can!`,
+                `What’s the secret behind hiring top talent? Discover how ${brandName}  is changing the recruitment game.`,
+                `Ever wondered how the most successful companies select their employees? The answer lies in ${brandName} .`
             ],
             "Lead Magnet Style Hook": [
-                `Free eBook: How ${brandName} Assessment helps HR teams reduce hiring mistakes. Get your copy now!`,
-                `Sign up for a free demo of ${brandName} Assessment and see firsthand how it can enhance your recruitment process.`,
-                `Download our free guide on optimizing your hiring process with ${brandName} Assessment.`
+                `Free eBook: How ${brandName}  helps HR teams reduce hiring mistakes. Get your copy now!`,
+                `Sign up for a free demo of ${brandName}  and see firsthand how it can enhance your recruitment process.`,
+                `Download our free guide on optimizing your hiring process with ${brandName} .`
             ],
             "Awareness Type Hook": [
-                `Recruitment doesn’t have to be a guessing game. Learn how ${brandName} Assessment brings precision to your hiring.`,
-                `Over 10,000 HR professionals trust ${brandName} Assessment for smarter hiring decisions. Find out why.`,
-                `Discover the power of data-driven hiring with ${brandName} Assessment – the next big thing in recruitment technology.`
+                `Recruitment doesn’t have to be a guessing game. Learn how ${brandName}  brings precision to your hiring.`,
+                `Over 10,000 HR professionals trust ${brandName}  for smarter hiring decisions. Find out why.`,
+                `Discover the power of data-driven hiring with ${brandName}  – the next big thing in recruitment technology.`
             ]
         };
 
