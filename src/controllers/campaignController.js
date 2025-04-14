@@ -220,50 +220,15 @@ export const generateCampaignPostContent = async (req, res) => {
 
         // const brandName = brand.name;
 
-
-        // Generate ideas based on hook types for dynamic brand name
-        let hookIdeas = {
-            "Trending and Timely Hook": [
-                `Why HR leaders are choosing ${brandName}  in 2025 – the most trusted tool for recruitment in an AI-driven world.`,
-                `The latest trend in employee s – discover how ${brandName}  is reshaping talent acquisition.`,
-                `In today’s hiring landscape, ${brandName}  is a game-changer. Here's why you need to know about it.`
-            ],
-            "Value Driven Hook": [
-                `Save time and hire the right talent faster with ${brandName}  – the ultimate hiring tool for smarter decisions.`,
-                `Maximize your hiring success – learn how ${brandName}  delivers real results for companies worldwide.`,
-                `Unlock insights to hire better with ${brandName}  – see how it can transform your recruitment process.`
-            ],
-            "Curiosity Driven Hook": [
-                `What if you could predict employee success before hiring them? With ${brandName} , you can!`,
-                `What’s the secret behind hiring top talent? Discover how ${brandName}  is changing the recruitment game.`,
-                `Ever wondered how the most successful companies select their employees? The answer lies in ${brandName} .`
-            ],
-            "Lead Magnet Style Hook": [
-                `Free eBook: How ${brandName}  helps HR teams reduce hiring mistakes. Get your copy now!`,
-                `Sign up for a free demo of ${brandName}  and see firsthand how it can enhance your recruitment process.`,
-                `Download our free guide on optimizing your hiring process with ${brandName} .`
-            ],
-            "Awareness Type Hook": [
-                `Recruitment doesn’t have to be a guessing game. Learn how ${brandName}  brings precision to your hiring.`,
-                `Over 10,000 HR professionals trust ${brandName}  for smarter hiring decisions. Find out why.`,
-                `Discover the power of data-driven hiring with ${brandName}  – the next big thing in recruitment technology.`
-            ]
-        };
-
-        // Select the appropriate hook ideas based on the selected hook type
-        const selectedHookIdeas = hookIdeas[hookType] || [];
-
         // Generate a post using the selected hook idea and campaign details
         const campaignPrompt = `Generate a LinkedIn post using the following details:
         - User Prompt: ${prompt}
         - Selected Hook Type: ${hookType}
-        - Hook Ideas: ${selectedHookIdeas.join(", ")}
+        - Hook Ideas: ${selectedHookIdeas}
         - Product Details: ${selectedProduct}
         - Make sure the post is not more than 300 words and is tailored for LinkedIn to drive awareness for the ${brandName} brand.
         - Add emojies to make it more engaging.
         `;
-
-        console.log("Campaign Prompt:", campaignPrompt);
 
         const post = await generatePost(campaignPrompt);
 
