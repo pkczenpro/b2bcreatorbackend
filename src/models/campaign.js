@@ -22,7 +22,7 @@ const campaignSchema = new mongoose.Schema(
                 approved: { type: Boolean, default: false }, // Approval status
                 content: [
                     {
-                        type: { type: String, required: true }, // e.g., "image", "video", "blog"
+                        type: { type: String, required: false }, // e.g., "image", "video", "blog"
                         url: { type: String, required: false }, // URL of the content
                         content: { type: String, required: false }, // Description of the content
                         files: [{ type: String }], // File URLs

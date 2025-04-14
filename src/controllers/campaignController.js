@@ -267,64 +267,77 @@ export const getCampaignAnalytics = async (req, res) => {
 export const generateCarouselMakerContent = async (req, res) => {
     const { posts, campaignId, aiPrompt } = req.body;
 
+    console.log("Received posts:", posts);
+
     try {
         const campaignData = await campaign.findById(campaignId);
 
-        if (!campaignData) {
-            return res.status(404).json({ error: "Campaign not found" });
-        }
+        // if (!campaignData) {
+        //     return res.status(404).json({ error: "Campaign not found" });
+        // }
 
         const results = await Promise.all(posts.map(async (post) => {
             const prompt = `
-            You are a creative AI expert in designing engaging LinkedIn carousel content.
-            
-            ## Objective:
-            Based on the provided JSON data structure, generate a professional and visually appealing carousel post for LinkedIn.
+            You are an expert AI content creator and LinkedIn strategist. Your task is to transform the given JSON into a high-quality LinkedIn carousel post, optimized for attention, clarity, and conversion.
             
             ---
             
-            ## Context:
-            Campaign Name: ${campaignData.title}
+            🎯 **Objective**:
+            Using the provided JSON structure, improve and fill in the carousel content while maintaining the original structure. This carousel will be posted on LinkedIn, so make it professional, concise, visually appealing, and engaging.
             
-            Creator's Notes & Style Guide: 
+            ---
+            
+            ✍️ **Creator’s Notes & Style Guide & Content Asked**:
             ${aiPrompt}
             
             ---
             
-            ## Data Structure Provided:
+            🧩 **Post JSON Input**:
             ${JSON.stringify(post.postData, null, 2)}
             
             ---
             
-            ## Instructions:
+            **Instructions** (Follow these rules strictly):
             
-            1. Fill empty "label" fields with creative and suitable content.
-            2. Improve existing "label" texts to sound professional, engaging, and LinkedIn-friendly.
-            3. Add relevant emojis only when it enhances the message.
-            4. Modify design properties to support the content, such as:
-               - "fontSize"
+            1. Fill in any empty "label" fields with engaging and relevant content.
+            2. Rewrite existing "label" fields to be more professional, polished, and suitable for LinkedIn.
+            3. Add relevant emojis only when they improve clarity or tone — avoid overuse.
+            4. Adjust design-related properties as needed:
+               - "fontSize" (follow title-specific formula below)
                - "color"
                - "textAlign"
-               - "hidden" (set to true if element feels unnecessary)
-            5. Feel free to modify:
-               - "bgColor" for better visual impact
-               - "editableButton" text to drive action
-            6. Keep the JSON structure *exactly the same*. Do not add or remove keys.
-            7. Use concise, punchy language ideal for carousel consumption.
-            8. Ensure consistency across slides (title-tone-design alignment).
-            9. Ensure fontSize for title label is const fontSize = Math.max(32, 64 - [value of item].length);
-            10. First post should be a hook post and the rest should be content posts.
-            11. content posts topic should be hidden and title should be visible, also the tagline should be the content for each topic
+               - "hidden" (set to true for unneeded elements)
+            5. You may also modify:
+               - "bgColor" for contrast and readability
+               - "editableButton" to drive CTA
+            6. Do NOT change:
+               - "editableProfileName object"
+               - "editableProfileUsername object"
+               - "profileImage object"
+            7. Do NOT add or remove any keys. Keep the **exact same JSON structure**.
+            8. Use concise, impactful language — ideal for carousel reading (no fluff).
+            9. Apply this fontSize rule to **title labels**:
+               \`fontSize = Math.max(32, 64 - [title text length])\`
+            10. First post must act as a **hook** to grab attention.
+            11. All following posts are **content posts**:
+                - "editableTopic" should be **hidden**
+                - "editableTitle" is the main heading
+                - "editableTagline" is the body/content for each slide
             
             ---
             
-            ## Output Rules:
-            - Respond with ONLY the updated JSON.
-            - No extra explanation or notes.
-            - Valid JSON only.
+            ✅ **Your Response Format**:
             
-            Let's begin creating an outstanding carousel!
+            - Respond with **ONLY** the updated JSON (valid format).
+            - No extra explanation, comments, or text outside the JSON.
+            - Structure and key names must remain unchanged.
+            - Ensure the JSON is parseable.
+            
+            ---
+            
+            Let’s create an amazing carousel that resonates with LinkedIn users!
             `;
+
 
 
             const contentPrompt = await generatePost(prompt);
