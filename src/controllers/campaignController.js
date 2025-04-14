@@ -74,7 +74,7 @@ export const removeCreator = async (req, res) => {
             req.user.id,  // sender
             req.params.creatorId, // receiver
             `You have been removed from the campaign "${campaign.title}"`,
-            "/dashboard/campaigns",
+            null
         );
 
         res.status(200).json(campaign);
@@ -92,7 +92,7 @@ export const selectCreator = async (req, res) => {
             req.user.id,  // sender
             req.body.creatorId, // receiver
             `You have been selected for the campaign "${campaign.title}"`,
-            "/dashboard/campaigns",
+            "/dashboard/campaigns-details/" + req.params.campaignId,
         );
 
         res.status(200).json(campaign);
@@ -170,7 +170,7 @@ export const acceptCreator = async (req, res) => {
             req.user.id,  // sender
             req.params.creatorId, // receiver
             `You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
-            "/dashboard/campaigns",
+            "/dashboard/campaigns-details/" + req.params.campaignId,
         );
 
         res.status(200).json(campaign);
@@ -201,7 +201,7 @@ export const acceptWork = async (req, res) => {
             req.user.id,  // sender
             req.params.creatorId, // receiver
             `Your work for the campaign "${campaign.title}" has been accepted`,
-            "/dashboard/campaigns",
+            "/dashboard/campaigns-details/" + req.params.campaignId,
         );
 
         res.status(200).json(campaign);
@@ -313,6 +313,8 @@ export const generateCarouselMakerContent = async (req, res) => {
             7. Use concise, punchy language ideal for carousel consumption.
             8. Ensure consistency across slides (title-tone-design alignment).
             9. Ensure fontSize for title label is const fontSize = Math.max(32, 64 - [value of item].length);
+            10. First post should be a hook post and the rest should be content posts.
+            11. content posts topic should be hidden and title should be visible, also the tagline should be the content for each topic
             
             ---
             

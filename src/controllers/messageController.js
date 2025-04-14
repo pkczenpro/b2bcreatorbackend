@@ -60,7 +60,7 @@ export const markMessagesAsRead = async (req, res) => {
 export const getChatList = async (req, res) => {
     const user_id = req.user.id;
     try {
-        const chatList = await MessageService.getChatList(user_id);
+        const chatList = await MessageService.getChatList(req, user_id);
         res.status(200).json(chatList);
     } catch (error) {
         res.status(500).json({ error: error.message });

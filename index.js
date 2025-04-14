@@ -65,15 +65,17 @@ app.use("/api", routes);
 // Default Route
 app.get("/", (req, res) => res.send("🚀"));
 
+const activeUsers = new Map();
 // Socket.IO Events
 io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
     socket.on("join", (userId) => {
         console.log(`User ${userId} joined the chat`);
+        activeUsers.set(socket.id, userId);
+        io.emit("activeUsers", [...activeUsers.values()]);
         socket.join(userId); // Join user-specific room
     });
-
     // socket.on("send_message", ({ sender, receiver, message, timestamp }) => {
     //     console.log(`Message from ${sender} to ${receiver}: ${message}`);
     //     // Emit the message to the receiver's room
@@ -86,11 +88,12 @@ io.on("connection", (socket) => {
     // });
 
     socket.on("disconnect", () => {
+        activeUsers.delete(socket.id);
+        io.emit("activeUsers", [...activeUsers.values()]);
         console.log("A user disconnected:", socket.id);
     });
 });
 
-// Socket.IO instance
 app.set("io", io);
 
 // MongoDB Connection

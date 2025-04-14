@@ -41,7 +41,6 @@ const MessageService = {
 
             await newMessage.save();
             const io = req.app.get('io');
-            console.log("io", io);
             if (io) {
                 io.to(receiver.toString()).emit('message', {
                     from: sender,
@@ -50,8 +49,6 @@ const MessageService = {
                     createdAt: newMessage.timestamp,
                     isFirstMessage: !isFirstMessage,
                 });
-
-                console.log("Message sent to receiver:", receiver);
             }
 
             return newMessage;
@@ -71,7 +68,7 @@ const MessageService = {
         }
     },
 
-    async getChatList(user_id) {
+    async getChatList(req, user_id) {
         try {
             const chatList = await Message.aggregate([
                 // Match messages where the user is either sender or receiver
@@ -148,21 +145,18 @@ const MessageService = {
                     }
                 }
             ]);
-
-            console.log("Chat List:", chatList);
-
             return chatList;
         } catch (error) {
             throw new Error("Error fetching chat list: " + error.message);
         }
     },
-    
+
 
     async getContactWithUsers(req) {
         try {
             const user = req.user;
-            const user_id = user.id;
 
+            const user_id = req.user.id;
             if (!user) throw new Error("User not found");
 
             // Determine target userType based on current user

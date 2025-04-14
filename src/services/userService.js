@@ -385,15 +385,15 @@ const UserService = {
             }
         }
 
-        if (!req.body.category) {
+        if (!req.body.category && user.userType === "brand") {
             throw new Error("Category is required");
         }
 
-        if (!req.body.location) {
+        if (!req.body.location && user.userType === "brand") {
             throw new Error("Location is required");
         }
 
-        if (!req.body.subCategory) {
+        if (!req.body.subCategory && user.userType === "brand") {
             throw new Error("Subcategory is required");
         }
 

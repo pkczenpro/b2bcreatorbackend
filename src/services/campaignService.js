@@ -96,7 +96,7 @@ const CampaignService = {
             req.user.id,  // sender
             creatorId, // receiver
             `You have been added to a campaign: ` + campaign.title,
-            "/dashboard/campaigns",
+            "/dashboard/campaigns-details/" + campaignId,
         );
 
         return campaign;
