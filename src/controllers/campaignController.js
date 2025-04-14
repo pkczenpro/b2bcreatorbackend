@@ -224,7 +224,6 @@ export const generateCampaignPostContent = async (req, res) => {
         const campaignPrompt = `Generate a LinkedIn post using the following details:
         - User Prompt: ${prompt}
         - Selected Hook Type: ${hookType}
-        - Hook Ideas: ${selectedHookIdeas}
         - Product Details: ${selectedProduct}
         - Make sure the post is not more than 300 words and is tailored for LinkedIn to drive awareness for the ${brandName} brand.
         - Add emojies to make it more engaging.
