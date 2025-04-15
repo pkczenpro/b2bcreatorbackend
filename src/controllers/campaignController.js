@@ -1,9 +1,8 @@
 import campaign from "../models/campaign.js";
-import user from "../models/user.js";
-import productRepository from "../repositories/productRepository.js";
 import UserRepository from "../repositories/userRepository.js";
 import CampaignService from "../services/campaignService.js";
 import NotificationService from "../services/notificationService.js";
+import MessageService from "../services/messageService.js";
 import generatePost from "../services/openAiServices.js";
 
 
@@ -73,7 +72,7 @@ export const removeCreator = async (req, res) => {
             req.app.get('io'),
             req.user.id,  // sender
             req.params.creatorId, // receiver
-            `You have been removed from the campaign "${campaign.title}"`,
+            `You've been removed from the “${campaign.title}” campaign. If you have any questions, feel free to reach out!`,
             null
         );
 
@@ -91,7 +90,7 @@ export const selectCreator = async (req, res) => {
             req.app.get('io'),
             req.user.id,  // sender
             req.body.creatorId, // receiver
-            `You have been selected for the campaign "${campaign.title}"`,
+            `🎉 Great news! You have been selected for the campaign "${campaign.title}"`,
             "/dashboard/campaigns-details/" + req.params.campaignId,
         );
 
@@ -169,7 +168,7 @@ export const acceptCreator = async (req, res) => {
             req.app.get('io'),
             req.user.id,  // sender
             req.params.creatorId, // receiver
-            `You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
+            `🎉 Great news! You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
             "/dashboard/campaigns-details/" + req.params.campaignId,
         );
 
@@ -183,7 +182,7 @@ export const submitWork = async (req, res) => {
     try {
         const campaign = await CampaignService.submitWork(req, req.params.campaignId, req.params.creatorId, req.body);
         if (campaign?.error_code === 400) {
-            return res.status(400).json({ error: campaign?.message });
+            return res.status(200).json(campaign);
         }
         res.status(200).json(campaign);
     } catch (error) {
@@ -200,8 +199,15 @@ export const acceptWork = async (req, res) => {
             req.app.get('io'),
             req.user.id,  // sender
             req.params.creatorId, // receiver
-            `Your work for the campaign "${campaign.title}" has been accepted`,
+            `🎉 Great news! Your work for the campaign "${campaign.title}" has been accepted`,
             "/dashboard/campaigns-details/" + req.params.campaignId,
+        );
+
+        await MessageService.saveMessage(
+            req,
+            req.user.id,
+            req.params.creatorId,
+            `🎉 Great news! Your work for the “${campaign.title}” campaign has been accepted by the brand and shared on LinkedIn!`,
         );
 
         res.status(200).json(campaign);
@@ -272,9 +278,9 @@ export const generateCarouselMakerContent = async (req, res) => {
     try {
         const campaignData = await campaign.findById(campaignId);
 
-        // if (!campaignData) {
-        //     return res.status(404).json({ error: "Campaign not found" });
-        // }
+        if (!campaignData) {
+            return res.status(404).json({ error: "Campaign not found" });
+        }
 
         const results = await Promise.all(posts.map(async (post) => {
             const prompt = `

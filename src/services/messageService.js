@@ -42,6 +42,7 @@ const MessageService = {
             await newMessage.save();
             const io = req.app.get('io');
             if (io) {
+                console.log("receiver", receiver);
                 io.to(receiver.toString()).emit('message', {
                     from: sender,
                     text: message,
@@ -70,6 +71,7 @@ const MessageService = {
 
     async getChatList(req, user_id) {
         try {
+            const lastSeen = req.app.get("lastSeen");
             const chatList = await Message.aggregate([
                 // Match messages where the user is either sender or receiver
                 {
@@ -145,7 +147,15 @@ const MessageService = {
                     }
                 }
             ]);
-            return chatList;
+            const chatListWithLastSeen = chatList.map(chat => {
+                const lastSeenTime = lastSeen.get(chat._id.toString());
+                if (lastSeenTime) {
+                    chat.lastSeen = lastSeenTime;
+                }
+                return chat;
+            }
+            );
+            return chatListWithLastSeen;
         } catch (error) {
             throw new Error("Error fetching chat list: " + error.message);
         }
@@ -183,12 +193,35 @@ const MessageService = {
         } catch (ex) {
             throw new Error(`Error fetching contact with users: ${ex.message}`);
         }
+    },
+
+    async uploadFile(req, sender, receiver) {
+        try {
+            const file = req.files.file[0];
+            const filePath = `${process.env.DOMAIN}/uploads/${file.filename}`;
+            const newMessage = new Message({
+                sender,
+                receiver,
+                message: filePath,
+                isFile: true,
+            });
+            await newMessage.save();
+            const io = req.app.get('io');
+            if (io) {
+                console.log("receiver", receiver);
+                io.to(receiver.toString()).emit('message', {
+                    from: sender,
+                    text: filePath,
+                    isSender: false,
+                    createdAt: newMessage.timestamp,
+                    isFirstMessage: true,
+                });
+            }
+            return newMessage;
+        } catch (error) {
+            throw new Error('Error uploading file');
+        }
     }
-
-
-
-
-
 }
 
 export default MessageService;

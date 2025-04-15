@@ -1,4 +1,5 @@
 import UserService from "../services/userService.js";
+import NotificationService from "../services/notificationService.js";
 
 const UserController = {
     async register(req, res) {
@@ -248,28 +249,18 @@ const UserController = {
         }
     },
 
-    // async shareContent(req, res) {
-    //     try {
-    //         const response = await UserService.shareContent(req, res);
-    //         res.json(response);
-    //     } catch (error) {
-    //         res.status(400).json({ error: error.message });
-    //     }
-    // },
-
-    // async getSharedContent(req, res) {
-    //     try {
-    //         const response = await UserService.getSharedPosts(req, res);
-    //         res.json(response);
-    //     } catch (error) {
-    //         res.status(400).json({ error: error.message });
-    //     }
-    // },
-
-
     async followBrand(req, res) {
         try {
             const response = await UserService.followBrand(req, res);
+
+            await NotificationService.sendNotification({
+                io: req.app.get("io"),
+                senderId: req.user.id,
+                receiverId: req.params.brandId,
+                message: `🙌 You’ve got a new follower — ${response.name}!`,
+                link: `/dashboard/user-preview/${req.user.id}`,
+            });
+
             res.json(response);
         } catch (error) {
             res.status(400).json({ error: error.message });
@@ -285,14 +276,6 @@ const UserController = {
         }
     },
 
-    async getPartnerships(req, res) {
-        try {
-            const response = await UserService.getPartnerships(req, res);
-            res.json(response);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
-    }
 };
 
 export default UserController;

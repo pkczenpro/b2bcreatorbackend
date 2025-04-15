@@ -529,7 +529,6 @@ const UserService = {
         return brandData;
     },
 
-    // creator preview
     async getCreatorById(creatorId) {
         const mongooseObjectId = mongoose.Types.ObjectId;
         if (!mongooseObjectId.isValid(creatorId)) throw new Error("Invalid creator ID");
@@ -540,174 +539,11 @@ const UserService = {
         return creator;
     },
 
-    // async registerLinkedInUpload(accessToken, ownerUrn, type = "image") {
-    //     const url = "https://api.linkedin.com/v2/assets?action=registerUpload";
-
-    //     const recipes = type === "video"
-    //         ? ["urn:li:digitalmediaRecipe:feedshare-video"]
-    //         : type === "pdf"
-    //             ? ["urn:li:digitalmediaRecipe:feedshare-document"]
-    //             : ["urn:li:digitalmediaRecipe:feedshare-image"];
-
-    //     console.log("Registering upload with recipes:", recipes);
-
-    //     const requestBody = {
-    //         registerUploadRequest: {
-    //             recipes,
-    //             owner: ownerUrn,
-    //             serviceRelationships: [
-    //                 {
-    //                     relationshipType: "OWNER",
-    //                     identifier: "urn:li:userGeneratedContent"
-    //                 }
-    //             ]
-    //         }
-    //     };
-
-    //     try {
-    //         const response = await axios.post(url, requestBody, {
-    //             headers: {
-    //                 "Authorization": `Bearer ${accessToken}`,
-    //                 "Content-Type": "application/json"
-    //             }
-    //         });
-
-    //         return response.data.value;
-    //     } catch (error) {
-    //         console.error("Error registering upload:", error.response?.data || error.message);
-    //         throw error;
-    //     }
-    // },
-
-    // async uploadMedia(accessToken, ownerUrn, type, mediaUrl) {
-    //     try {
-    //         const uploadData = await this.registerLinkedInUpload(accessToken, ownerUrn, type);
-    //         const uploadUrl = uploadData.uploadMechanism["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"].uploadUrl;
-    //         const assetUrn = uploadData.asset;
-
-    //         const mediaBuffer = Buffer.from(await fetch(mediaUrl).then(res => res.arrayBuffer()));
-
-    //         const mediaResponse = await axios.put(uploadUrl, mediaBuffer, {
-    //             headers: {
-    //                 "Authorization": `Bearer ${accessToken}`,
-    //                 "Content-Type": type === "video" ? "video/mp4" : type === "pdf" ? "application/pdf" : "image/jpeg"
-    //             }
-    //         });
-
-    //         console.log("Media upload response:", mediaResponse.data);
-
-    //         if (mediaResponse.status === 201 || mediaResponse.status === 200) {
-    //             return assetUrn;
-    //         } else {
-    //             console.error("Media upload failed", mediaResponse.data);
-    //             return null;
-    //         }
-    //     } catch (error) {
-    //         console.error("Error uploading media:", error.response?.data || error.message);
-    //         return null;
-    //     }
-    // },
-
-    // async shareContent(req, res) {
-    //     const { accessToken, userId, postContent, mediaType } = req.body;
-    //     const imageFiles = req.files?.image || []; // Support multiple images
-    //     const mediaUrls = imageFiles.map(file => `${process.env.DOMAIN}/uploads/${file.filename}`);
-
-    //     try {
-    //         let mediaUrns = [];
-
-    //         // Step 1: Upload each media file if provided
-    //         if (mediaType && mediaUrls.length > 0) {
-    //             for (const mediaUrl of mediaUrls) {
-    //                 const mediaUrn = await this.uploadMedia(accessToken, `urn:li:person:${userId}`, mediaType, mediaUrl);
-    //                 if (mediaUrn) {
-    //                     mediaUrns.push({ status: "READY", media: mediaUrn });
-    //                 }
-    //             }
-    //             if (mediaUrns.length === 0) {
-    //                 return res.status(400).json({ message: "Failed to upload media" });
-    //             }
-    //         }
-
-    //         // Step 2: Create post with multiple media files
-    //         const apiUrl = "https://api.linkedin.com/v2/ugcPosts";
-    //         const postData = {
-    //             author: `urn:li:person:${userId}`,
-    //             lifecycleState: "PUBLISHED",
-    //             specificContent: {
-    //                 "com.linkedin.ugc.ShareContent": {
-    //                     shareCommentary: { text: postContent },
-    //                     shareMediaCategory: mediaUrns.length > 0 ? "IMAGE" : "NONE",
-    //                     media: mediaUrns
-    //                 },
-    //             },
-    //             visibility: {
-    //                 "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-    //             },
-    //         };
-
-    //         const response = await fetch(apiUrl, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 Authorization: `Bearer ${accessToken}`,
-    //                 'X-Restli-Protocol-Version': '2.0.0',
-    //             },
-    //             body: JSON.stringify(postData),
-    //         });
-
-    //         const responseData = await response.json();
-
-    //         if (response.ok) {
-    //             return res.json({ message: 'Post published successfully!', responseData });
-    //         } else {
-    //             return res.status(400).json({ message: 'Failed to publish post', error: responseData });
-    //         }
-    //     } catch (error) {
-    //         console.error('Content Sharing Error:', error);
-    //         return res.status(500).json({ message: 'Failed to share content', error: error.message });
-    //     }
-    // },
-
-
-    // async getSharedPosts(req, res) {
-    //     const { accessToken, userId } = req.body;
-
-    //     // Convert userId to URN format
-    //     const userUrn = `urn:li:person:${userId}`;
-
-    //     // Corrected API URL for retrieving user posts
-    //     const apiUrl = `https://api.linkedin.com/v2/shares?q=owners&owners=${userUrn}`;
-
-    //     try {
-    //         const response = await fetch(apiUrl, {
-    //             method: 'GET',
-    //             headers: {
-    //                 'Authorization': `Bearer ${accessToken}`,
-    //                 'LinkedIn-Version': '202503',
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         });
-
-    //         if (response.ok) {
-    //             const data = await response.json();
-    //             res.status(200).json({ message: 'Posts retrieved successfully', posts: data });
-    //         } else {
-    //             const error = await response.json();
-    //             res.status(400).json({ message: 'Failed to fetch posts', error });
-    //         }
-    //     } catch (error) {
-    //         res.status(500).json({ message: 'Server error', error });
-    //     }
-    // },
-
-
     async followBrand(req, res) {
         const userId = req.user.id;
         const brandId = req.params.brandId;
 
         try {
-            // Find the user and brand
             const user = await UserRepository.findUserById(userId);
             if (!user) return { message: 'User not found' };
 
@@ -716,24 +552,17 @@ const UserService = {
             const brand = await UserRepository.findUserById(brandId);
             if (!brand) return { message: 'Brand not found' };
 
-            // If the user is already following the brand, unfollow it
             if (user.following.includes(brandId)) {
-                // Remove the brand from the user's following list
                 user.following = user.following.filter(id => id.toString() !== brandId);
                 await UserRepository.updateUser(userId, { following: user.following });
-
-                // Remove the user from the brand's followers list
                 brand.followers = brand.followers.filter(id => id.toString() !== userId);
                 await UserRepository.updateUser(brandId, { followers: brand.followers });
-
                 return { message: 'Unfollowed the brand successfully', user }
             }
 
-            // Add the brand to the user's following list
             user.following.push(brandId);
             await UserRepository.updateUser(userId, { following: user.following });
 
-            // Add the user to the brand's followers list
             brand.followers.push(userId);
             await UserRepository.updateUser(brandId, { followers: brand.followers });
 
@@ -793,20 +622,6 @@ const UserService = {
         }
     },
 
-    async getPartnerships(req, res) {
-        const userId = req.user.id;
-        const user = await UserRepository.findUserById(userId);
-        if (!user) return { message: 'User not found' };
-
-        // Find 'done' campaigns 
-        const campaigns = await CampaignRepository.findCampaignsByBrandId(userId);
-        if (!campaigns) return { message: 'No campaigns found' };
-
-        // Find 'done' products
-        console.log(campaigns)
-
-        // return partnerships;
-    }
 
 };
 

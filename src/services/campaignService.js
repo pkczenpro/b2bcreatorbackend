@@ -322,9 +322,9 @@ const CampaignService = {
             "IMAGE"
         );
 
-        console.log(res)
         post.urnli = res.id;
         post.url = "https://www.linkedin.com/embed/feed/update/" + res.id;
+        post.type = "ai_text_creator";
         // Update status
         selectedCreator.status = "done";
         await campaign.save();

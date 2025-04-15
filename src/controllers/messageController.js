@@ -77,10 +77,25 @@ export const contactWithUsers = async (req, res) => {
     }
 }
 
+export const uploadFile = async (req, res) => {
+    const { sender, receiver } = req.body;
+    if (!sender || !receiver) {
+        return res.status(400).json({ error: 'Sender and Receiver are required' });
+    }
+
+    try {
+        const fileMessage = await MessageService.uploadFile(req, sender, receiver);
+        res.status(201).json(fileMessage);
+    } catch (error) {
+        res.status(500).json({ error: error });
+    }
+}
+
 export default {
     fetchMessages,
     sendMessage,
     getChatList,
     contactWithUsers,
-    markMessagesAsRead
+    markMessagesAsRead,
+    uploadFile
 };

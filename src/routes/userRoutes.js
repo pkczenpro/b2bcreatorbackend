@@ -35,19 +35,12 @@ router.post("/complete-onboarding", authenticate, upload.fields([
     { name: "coverImage", maxCount: 1 }
 ]), UserController.completeUserSetup);
 
-// Unified route for user services, previous work, featured work, testimonials, etc.
 router.post("/:userId/:field/:operation/:itemId?", authenticate, upload.single("image"), UserController.handleUserField);
 
-// router.post("/share-content", upload.fields([
-//     { name: "image", maxCount: 10 },
-//     { name: "video", maxCount: 1 }
-// ]), UserController.shareContent);
-
-// router.post("/get-content", UserController.getSharedContent);
 router.get("/follow-brand/:brandId", authenticate, UserController.followBrand);
 
 router.post("/get-access-token", authenticate, UserController.getAccessToken);
 
-router.get("/partnerships", authenticate, UserController.getPartnerships);
+
 
 export default router;

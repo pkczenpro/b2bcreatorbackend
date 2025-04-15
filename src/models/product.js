@@ -26,6 +26,13 @@ const productSchema = new mongoose.Schema(
         capterraLink: { type: String, required: false },
         additionalDetails: { type: String, required: false },
         productHunt: { type: String, required: false },
+        rating: { type: Number, default: 0 }, // Average rating of the product
+        ratings: [
+            {
+                userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Reference to the user who rated
+                rating: { type: Number, min: 1, max: 5 }, // Rating value between 1 and 5
+            },
+        ],
     },
     { timestamps: true } // Automatically adds createdAt and updatedAt
 );

@@ -2,10 +2,10 @@ import express from "express";
 import productController from "../controllers/productController.js";
 import upload from "../middlewares/uploadMiddleware.js";
 import authenticateBrand from "../middlewares/authenticateBrand.js";
+import authenticate from "../middlewares/authenticate.js";
 
 const router = express.Router();
 
-// Uploads: Single for 'productLogo', Multiple for 'productImages'
 router.post(
     "/",
     authenticateBrand,
@@ -15,11 +15,9 @@ router.post(
     ]),
     productController.createProduct
 );
-
 router.get("/", productController.getAllProducts);
 router.get("/:id", productController.getProductById);
 router.get("/brand/:brandId", productController.getProductsByBrand);
-
 router.put(
     "/:id",
     authenticateBrand,
@@ -29,7 +27,9 @@ router.put(
     ]),
     productController.updateProduct
 );
-
 router.delete("/:id", productController.deleteProduct);
+router.post("/rate/:id", authenticate, productController.rateProduct);
+
+
 
 export default router;
