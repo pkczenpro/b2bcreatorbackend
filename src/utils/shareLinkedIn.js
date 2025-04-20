@@ -49,7 +49,8 @@ export const shareLinkedIn = async (files, accessToken, userId, postContent, med
         });
 
         const responseData = await response.json();
-
+        console.log("RESPONSE DATA: _______")
+        console.log(responseData);
         if (response.ok) {
             return responseData;
         } else {
