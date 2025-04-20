@@ -251,9 +251,6 @@ const CampaignService = {
         const isCampaign = req.body.isCampaign === "1";
         const isIndependent = req.body.isCampaign === "0";
 
-        if (!isCampaign && !isIndependent) {
-            throw new Error("Invalid post sharing type");
-        }
 
         if (isCampaign) {
             // Check if campaign exists
@@ -309,11 +306,8 @@ const CampaignService = {
                 linkedinToken,
                 linkedinId,
                 content.content,
-                "image"
+                "IMAGE"
             );
-
-            console.log("RESULT: _______")
-            console.log(res);
         }
 
 

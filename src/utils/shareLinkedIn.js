@@ -3,11 +3,6 @@ import fetch from "node-fetch";
 
 export const shareLinkedIn = async (files, accessToken, userId, postContent, mediaType) => {
     const mediaUrls = files?.map(file => `${process.env.DOMAIN}/uploads/${file.filename}`);
-    console.log("MEDIA URLS: _______")
-    console.log(mediaUrls);
-
-    console.log("FILES: _______")
-    console.log(files)
     try {
         let mediaUrns = [];
 
