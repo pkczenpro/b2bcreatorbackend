@@ -40,7 +40,23 @@ const UserRepository = {
             isRead: false,
         }).populate("sender", "profileName profileImage");
         return unreadMessages;
-    }
+    },
+
+    async createDraft(userId, draftData) {
+        return await User.findByIdAndUpdate(userId, { $push: { drafts: draftData } }, { new: true });
+    },
+
+    async findDraftsByUserId(userId) {
+        return await User.findById(userId).select("drafts");
+    },
+
+    async deleteDraft(draftId, userId) {
+        return await User.findByIdAndUpdate(userId, { $pull: { drafts: { _id: draftId } } }, { new: true });
+    },
+
+    async updateDraft(draftId, userId, draftData) {
+        return await User.findByIdAndUpdate(userId, { $set: { "drafts.$[draft]": draftData } }, { arrayFilters: [{ "draft._id": draftId }] });
+    },
 };
 
 export default UserRepository;

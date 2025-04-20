@@ -42,5 +42,12 @@ router.get("/follow-brand/:brandId", authenticate, UserController.followBrand);
 router.post("/get-access-token", authenticate, UserController.getAccessToken);
 
 
+// drafts
+router.post("/save-draft", authenticate, UserController.saveDraft);
+router.get("/get-drafts", authenticate, UserController.getDrafts);
+router.delete("/delete-draft/:draftId", authenticate, UserController.deleteDraft);
+router.put("/update-draft/:draftId", authenticate, UserController.updateDraft);
+router.post("/publish-draft/:draftId", authenticate, UserController.publishDraft);
+
 
 export default router;

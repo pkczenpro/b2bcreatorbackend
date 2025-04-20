@@ -110,6 +110,19 @@ const userSchema = new mongoose.Schema({
     category: { type: String, required: false }, // e.g., "tech", "lifestyle", "travel"
     subCategory: { type: String, required: false }, // e.g., "software", "gadgets", "travel tips"
 
+    drafts: [
+        {
+            postContent: { type: String, required: false },
+            selectedCampaign: { type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', required: false },
+            selectedProduct: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: false },
+            brandName: { type: String, required: false },
+            hookType: { type: String, required: false },
+            uploadedImages: { type: [String], required: false },
+            isCampaignPost: { type: Boolean, required: false, default: false },
+            createdAt: { type: Date, required: true, default: Date.now },
+        },
+    ],
+
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);

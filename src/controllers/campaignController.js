@@ -215,14 +215,10 @@ export const acceptWork = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
 export const generateCampaignPostContent = async (req, res) => {
     try {
         const { prompt, selectedCampaign, hookType, selectedProduct, brandName } = req.body;
-        const camp = await campaign.findById(selectedCampaign);
-        if (!camp) throw new Error("Campaign not found");
-
-        const brand = await UserRepository.findUserById(camp.brandId);
-        if (!brand) throw new Error("Brand not found");
 
         // const brandName = brand.name;
 
@@ -244,9 +240,6 @@ export const generateCampaignPostContent = async (req, res) => {
     }
 };
 
-
-
-
 export const getLinkedInAnalytics = async (req, res) => {
     try {
         const contentId = req.params.contentId;
@@ -267,8 +260,6 @@ export const getCampaignAnalytics = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 }
-
-
 
 export const generateCarouselMakerContent = async (req, res) => {
     const { posts, campaignId, aiPrompt } = req.body;
@@ -371,9 +362,6 @@ export const generateCarouselMakerContent = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
-
-
 
 export default {
     createCampaign,

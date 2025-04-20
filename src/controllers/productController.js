@@ -14,12 +14,18 @@ const productController = {
                 capterraLink,
                 additionalDetails,
                 productHunt,
+                resources,
             } = req.body;
 
             const productLogo = req.files?.productLogo ? req.files.productLogo[0].filename : null;
             const productImages = req.files?.productImages ? req.files.productImages.map(file =>
                 "/uploads/" + file.filename
             ) : [];
+
+            const productResources = req.files?.resources ? req.files.resources.map(file =>
+                "/uploads/" + file.filename
+            ) : [];
+
             const newProduct = new product({
                 brandId: req.user.id, // Assuming authentication middleware sets `req.user`
                 productName,
@@ -33,6 +39,7 @@ const productController = {
                 capterraLink,
                 additionalDetails,
                 productHunt,
+                resources: productResources,
             });
 
             await newProduct.save();

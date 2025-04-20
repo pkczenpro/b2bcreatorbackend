@@ -276,6 +276,50 @@ const UserController = {
         }
     },
 
+    async saveDraft(req, res) {
+        try {
+            const response = await UserService.saveDraft(req, res);
+            res.json(response);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    },
+
+    async getDrafts(req, res) {
+        try {
+            const response = await UserService.getDrafts(req, res);
+            res.json(response);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    },
+
+    async deleteDraft(req, res) {
+        try {
+            const response = await UserService.deleteDraft(req, res);
+            res.json(response);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    },
+
+    async updateDraft(req, res) {
+        try {
+            const response = await UserService.updateDraft(req, res);
+            res.json(response);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    },
+
+    async publishDraft(req, res) {
+        try {
+            const response = await UserService.publishDraft(req, res);
+            res.json(response);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    },
 };
 
 export default UserController;

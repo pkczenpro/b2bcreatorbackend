@@ -9,6 +9,7 @@ import validateFieldData from "../utils/validateSchemas.js";
 import mongoose, { get } from "mongoose";
 import crypto from "crypto";
 import { faker } from "@faker-js/faker";
+import { shareLinkedIn } from "../utils/shareLinkedIn.js";
 
 const emailRE = /\S+@\S+\.\S+/;
 
@@ -622,6 +623,73 @@ const UserService = {
         }
     },
 
+
+    async saveDraft(req, res) {
+        const { postContent, selectedCampaign, selectedProduct, brandName, hookType, uploadedImages, createdAt, isCampaignPost } = req.body;
+        const userId = req.user.id;
+
+        // Format the draft data according to the schema requirements
+        const draftData = {
+            postContent: postContent || "",
+            selectedCampaign: selectedCampaign || null,
+            selectedProduct: selectedProduct || null,
+            brandName: brandName || "",
+            hookType: hookType || "",
+            uploadedImages: Array.isArray(uploadedImages) ? uploadedImages : [],
+            createdAt: createdAt,
+            isCampaignPost: isCampaignPost === "true" ? true : false,
+        };
+
+        const draft = await UserRepository.createDraft(userId, draftData);
+        return { success: true, message: "Draft saved successfully", draft };
+    },
+
+    async getDrafts(req, res) {
+        const userId = req.user.id;
+
+        const drafts = await UserRepository.findDraftsByUserId(userId);
+        return { success: true, message: "Drafts fetched successfully", drafts };
+    },
+
+    async deleteDraft(req, res) {
+        const draftId = req.params.draftId;
+        const userId = req.user.id;
+
+        const draft = await UserRepository.deleteDraft(draftId, userId);
+        return { success: true, message: "Draft deleted successfully", draft };
+    },
+
+    async updateDraft(req, res) {
+        const draftId = req.params.draftId;
+        const userId = req.user.id;
+
+        const draft = await UserRepository.updateDraft(draftId, userId, req.body);
+        return { success: true, message: "Draft updated successfully", draft };
+    },
+
+    async publishDraft(req, res) {
+        const draftId = req.params.draftId;
+        const userId = req.user.id;
+
+        const user = await UserRepository.findUserById(userId);
+        if (!user) return { success: false, message: "User not found" };
+
+        const draft = await UserRepository.findDraftById(draftId);
+        if (!draft) return { success: false, message: "Draft not found" };
+
+        // share to linkedin 
+        const linkedinToken = user.linkedin.access_token;
+        const linkedinId = user.linkedin.id;
+        const response = await shareLinkedIn(
+            draft.uploadedImages,
+            linkedinToken,
+            linkedinId,
+            draft.postContent,
+            "IMAGE"
+        );
+
+        return { success: true, message: "Draft published successfully", res };
+    },
 
 };
 

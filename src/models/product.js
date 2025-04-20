@@ -25,6 +25,7 @@ const productSchema = new mongoose.Schema(
         g2Link: { type: String, required: false },
         capterraLink: { type: String, required: false },
         additionalDetails: { type: String, required: false },
+        resources: [{ type: String }], // URLs of product resources
         productHunt: { type: String, required: false },
         rating: { type: Number, default: 0 }, // Average rating of the product
         ratings: [

@@ -2,13 +2,17 @@ import axios from "axios";
 import fetch from "node-fetch";
 
 export const shareLinkedIn = async (files, accessToken, userId, postContent, mediaType) => {
-    const mediaUrls = files.map(file => `${process.env.DOMAIN}${file}`);
+    const mediaUrls = files?.map(file => `${process.env.DOMAIN}/uploads/${file.filename}`);
+    console.log("MEDIA URLS: _______")
+    console.log(mediaUrls);
 
+    console.log("FILES: _______")
+    console.log(files)
     try {
         let mediaUrns = [];
 
         // Step 1: Upload each media file if provided
-        if (mediaType && mediaUrls.length > 0) {
+        if (mediaType && mediaUrls?.length > 0) {
             for (const mediaUrl of mediaUrls) {
                 const mediaUrn = await uploadMedia(accessToken, `urn:li:person:${userId}`, mediaType, mediaUrl);
                 if (mediaUrn) {
@@ -17,7 +21,8 @@ export const shareLinkedIn = async (files, accessToken, userId, postContent, med
             }
             if (mediaUrns.length === 0) {
                 console.error("Content Sharing Error: Failed to upload media files");
-                return { message: "Failed to share content", error: "Failed to upload media files" };
+
+                throw new Error("Failed to upload media files");
             }
         }
 

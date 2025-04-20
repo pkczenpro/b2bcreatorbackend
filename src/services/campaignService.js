@@ -234,19 +234,7 @@ const CampaignService = {
         }
         const imageFiles = req.files["images"];
 
-        // Check if campaign exists
-        const campaign = await Campaign.findById(campaignId);
-        if (!campaign) throw new Error("Campaign not found");
 
-        // Find the creator in the selectedCreators list
-        const selectedCreator = campaign.selectedCreators.find(
-            (c) => c.creatorId?.toString() === creatorId
-        );
-        if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
-
-        if (selectedCreator.content.length > 0) {
-            throw new Error("Content already submitted content for this campaign");
-        }
 
         const user = await User.findById(creatorId);
         if (!user) throw new Error("Creator not found");
@@ -260,39 +248,78 @@ const CampaignService = {
             };
         }
 
-        // Add content
-        selectedCreator.content.push({
-            type: content.type,
-            url: content.url || null,
-            content: content.content,
-            files: imageFiles ? imageFiles.map((file) =>
-                "/uploads/" + file.filename
-            ) : [],
-        });
+        const isCampaign = req.body.isCampaign === "1";
+        const isIndependent = req.body.isCampaign === "0";
 
-        await campaign.save();
+        if (!isCampaign && !isIndependent) {
+            throw new Error("Invalid post sharing type");
+        }
+
+        if (isCampaign) {
+            // Check if campaign exists
+            const campaign = await Campaign.findById(campaignId);
+            if (!campaign) throw new Error("Campaign not found");
+
+            // Find the creator in the selectedCreators list
+            const selectedCreator = campaign.selectedCreators.find(
+                (c) => c.creatorId?.toString() === creatorId
+            );
+            if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
+
+            if (selectedCreator.content.length > 0) {
+                throw new Error("Content already submitted content for this campaign");
+            }
+
+            // Add content
+            selectedCreator.content.push({
+                type: content.type,
+                url: content.url || null,
+                content: content.content,
+                files: imageFiles ? imageFiles.map((file) =>
+                    "/uploads/" + file.filename
+                ) : [],
+            });
+
+            await campaign.save();
 
 
-        await NotificationService.sendNotification(
-            req.app.get('io'),
-            req.user.id,  // sender
-            req.params.creatorId, // receiver
-            `You have submitted your work for the campaign "${campaign.title}"`,
-            "/dashboard/campaigns",
-        );
+            await NotificationService.sendNotification(
+                req.app.get('io'),
+                req.user.id,  // sender
+                req.params.creatorId, // receiver
+                `You have submitted your work for the campaign "${campaign.title}"`,
+                "/dashboard/campaigns",
+            );
 
-        // Send notification to the brand
-        await NotificationService.sendNotification(
-            req.app.get('io'),
-            req.user.id,  // sender
-            campaign.brandId, // receiver
-            `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
-            "/dashboard/campaigns",
-        );
+            // Send notification to the brand
+            await NotificationService.sendNotification(
+                req.app.get('io'),
+                req.user.id,  // sender
+                campaign.brandId, // receiver
+                `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
+                "/dashboard/campaigns",
+            );
+        }
+
+        if (isIndependent) {
+            const linkedinToken = user.linkedin.access_token;
+            const linkedinId = user.linkedin.id;
+            const res = await shareLinkedIn(
+                imageFiles,
+                linkedinToken,
+                linkedinId,
+                content.content,
+                "image"
+            );
+
+            console.log("RESULT: _______")
+            console.log(res);
+        }
 
 
-
-        return campaign;
+        return {
+            message: "Post shared successfully",
+        };
     },
 
     async acceptWork(campaignId, creatorId, postId) {
