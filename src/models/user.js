@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
         },
     ],
     bio: { type: String },
-    tags: [{ type: String, required: true }], // e.g., ["tech", "startup", "developer"]
+    tags: [{ type: String, required: false }], // e.g., ["tech", "startup", "developer"]
 
     // onboarding - brand
     location: { type: String, required: false }, // e.g., "New York, USA"
@@ -42,40 +42,40 @@ const userSchema = new mongoose.Schema({
     // services - creator
     services: [
         {
-            title: { type: String, required: true },
-            description: { type: String, required: true },
-            price: { type: Number, required: true },
-            basis: { type: String, required: true }, // e.g., "hourly", "fixed"
+            title: { type: String, required: false },
+            description: { type: String, required: false },
+            price: { type: Number, required: false },
+            basis: { type: String, required: false }, // e.g., "hourly", "fixed"
         },
     ],
 
     // previous work - creator
     previousWork: [
         {
-            image: { type: String, required: true },
-            title: { type: String, required: true },
-            description: { type: String, required: true },
-            url: { type: String, required: true },
+            image: { type: String, required: false },
+            title: { type: String, required: false },
+            description: { type: String, required: false },
+            url: { type: String, required: false },
         },
     ],
 
     // featured work - creator
     featuredWork: [
         {
-            image: { type: String, required: true },
-            title: { type: String, required: true },
-            description: { type: String, required: true },
-            url: { type: String, required: true },
+            image: { type: String, required: false },
+            title: { type: String, required: false },
+            description: { type: String, required: false },
+            url: { type: String, required: false },
         },
     ],
 
     // testimonials - creator
     testimonials: [
         {
-            name: { type: String, required: true },
-            position: { type: String, required: true },
-            text: { type: String, required: true },
-            image: { type: String, required: true },
+            name: { type: String, required: false },
+            position: { type: String, required: false },
+            text: { type: String, required: false },
+            image: { type: String, required: false },
         },
     ],
 
@@ -83,23 +83,23 @@ const userSchema = new mongoose.Schema({
     textBlock: [
         {
             title: { type: String, required: false },
-            description: { type: String, required: true },
+            description: { type: String, required: false },
         },
     ],
 
     // stats - creator
     stats: [
         {
-            title: { type: String, required: true },
-            value: { type: Number, required: true },
+            title: { type: String, required: false },
+            value: { type: Number, required: false },
         },
     ],
 
     // calendar
     calendar: [
         {
-            title: { type: String, required: true },
-            date: { type: Date, required: true },
+            title: { type: String, required: false },
+            date: { type: Date, required: false },
             color: { type: String, required: false },
         },
     ],

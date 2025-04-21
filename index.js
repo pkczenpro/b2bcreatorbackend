@@ -37,6 +37,8 @@ const io = new SocketIo(server, {
     },
 });
 
+// import './src/utils/cronScheduler.js';
+
 // Global Middlewares
 app.use(express.json());
 app.use(cors({ origin: "*", credentials: true }));

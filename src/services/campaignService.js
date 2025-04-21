@@ -26,28 +26,62 @@ const CampaignService = {
     },
 
     async getRelatedCampaignsForCreator(creatorId) {
-        return await Campaign.find({ "selectedCreators.creatorId": creatorId });
+        return await Campaign.find({
+            selectedCreators: {
+                $elemMatch: {
+                    creatorId: creatorId,
+                    status: { $ne: "prospect" }
+                }
+            }
+        });
     },
+
 
     /**
      * Get a single campaign by ID
      */
     async getCampaignById(campaignId, brandId) {
-        console.log(campaignId);
         const campaign = await Campaign.findById(campaignId)
             .populate("brandId", "name email")
-            .populate("selectedCreators.creatorId", "name email profileImage");
+            .populate("selectedCreators.creatorId", "name email profileImage reviews");
+
         const isOwner = campaign.brandId._id.toString() === brandId.toString();
+        const isApplied = campaign.selectedCreators.some(
+            (c) => c.creatorId?._id?.toString() === brandId?.toString()
+        );
+        const userCampaignStatus = campaign.selectedCreators.find(
+            (c) => c.creatorId?._id?.toString() === brandId?.toString()
+        )?.status;
+
+        // 🔍 Filter each creator's reviews to only include ones for this campaign
+        const selectedCreatorsWithFilteredReviews = campaign.selectedCreators.map((creatorObj) => {
+            const filteredReviews = (creatorObj.creatorId?.reviews || []).filter(
+                (review) => review.campaignId.toString() === campaignId.toString()
+            );
+
+            return {
+                ...creatorObj._doc,
+                creatorId: {
+                    ...creatorObj.creatorId._doc,
+                    reviews: filteredReviews,
+                },
+            };
+        });
+
         return {
             ...campaign._doc,
             isOwner,
+            isApplied,
+            status: userCampaignStatus,
+            selectedCreators: selectedCreatorsWithFilteredReviews,
         };
-    },
+    }
+    ,
 
     /**
      * Apply for a campaign as a creator
      */
-    async applyToCampaign(campaignId, creatorId, amount) {
+    async applyToCampaign(req, campaignId, creatorId, amount) {
         const campaign = await Campaign.findById(campaignId);
         if (!campaign) throw new Error("Campaign not found");
 
@@ -58,6 +92,7 @@ const CampaignService = {
         if (alreadyApplied) throw new Error("Creator already applied to this campaign");
 
 
+
         campaign.selectedCreators.push({
             creatorId: creatorId,
             status: "pending",
@@ -66,11 +101,21 @@ const CampaignService = {
         });
 
         await campaign.save();
+
+        // Check if creator is already selected
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            campaign.brandId, // receiver
+            `A new creator has applied to your campaign: ` + campaign.title,
+            "/dashboard/campaigns-details/" + campaignId,
+        );
+
         return campaign;
     },
 
     async addToCampaign(req, campaignId, creatorData) {
-        const { creatorId, amount, status = "prospect" } = creatorData;
+        const { creatorId, amount, status = "pending" } = creatorData;
 
 
         if (!mongoose.Types.ObjectId.isValid(campaignId)) {
@@ -78,7 +123,6 @@ const CampaignService = {
         }
         // console.log(campaignId);
         const campaign = await Campaign.findById(campaignId);
-        console.log(creatorId);
         if (!campaign) throw new Error("Campaign not found");
 
         // Check if the creator is already added
@@ -209,49 +253,34 @@ const CampaignService = {
     async acceptCreator(campaignId, creatorId, status) {
         const campaign = await Campaign.findById(campaignId);
         if (!campaign) throw new Error("Campaign not found");
-
-        // Find the creator in the selectedCreators list
+        console.log(campaign.selectedCreators);
+        console.log(creatorId);
+        // Find the creator i   n the selectedCreators list
         const selectedCreator = campaign.selectedCreators.find(
-            (c) => c.creatorId.toString() === creatorId
+            (c) => c.creatorId._id.toString() === creatorId
         );
         if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
 
-        // Update status
-        if (status === "approved") {
-            selectedCreator.approved = true;
-        } else if (status === "rejected") {
-            selectedCreator.approved = false;
-        }
+        selectedCreator.status = "approved";
+        selectedCreator.approved = true;
 
         await campaign.save();
         return campaign;
     },
 
     async submitWork(req, campaignId, creatorId, content) {
-        console.log("submitWork called with:", {
-            campaignId,
-            creatorId,
-            content,
-            files: req.files,
-            body: req.body,
-        });
-
+        // type, url, content, images, video
         if (!req.files["images"] && content.content === "") {
-            console.error("Validation failed: No content or images provided");
             throw new Error("A content or images are required");
         }
-
         const imageFiles = req.files["images"];
 
-        console.log("Fetching creator with ID:", creatorId);
         const user = await User.findById(creatorId);
-        if (!user) {
-            console.error("Creator not found:", creatorId);
-            throw new Error("Creator not found");
-        }
+        if (!user) throw new Error("Creator not found");
 
+
+        //todo frontend part if no access token redirect to get linkedin token
         if (user?.linkedin?.access_token === null || user?.linkedin?.access_token === undefined) {
-            console.warn("LinkedIn not connected for user:", creatorId);
             return {
                 message: "Creator has not linked their LinkedIn account",
                 error_code: 400,
@@ -261,98 +290,68 @@ const CampaignService = {
         const isCampaign = req.body.isCampaign === "1";
         const isIndependent = req.body.isCampaign === "0";
 
+
         if (isCampaign) {
-            console.log("Processing as campaign post");
-
+            // Check if campaign exists
             const campaign = await Campaign.findById(campaignId);
-            if (!campaign) {
-                console.error("Campaign not found:", campaignId);
-                throw new Error("Campaign not found");
-            }
+            if (!campaign) throw new Error("Campaign not found");
 
+            // Find the creator in the selectedCreators list
             const selectedCreator = campaign.selectedCreators.find(
                 (c) => c.creatorId?.toString() === creatorId
             );
+            if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
 
-            if (!selectedCreator) {
-                console.error("Creator not selected for campaign:", creatorId);
-                throw new Error("Creator is not selected for this campaign");
-            }
+            selectedCreator.status = "content_submitted";
 
-            if (selectedCreator.content.length > 0) {
-                console.warn("Content already submitted for this campaign by creator:", creatorId);
-                throw new Error("Content already submitted content for this campaign");
-            }
-
-            const filePaths = imageFiles
-                ? imageFiles.map((file) => "/uploads/" + file.filename)
-                : [];
-
-            console.log("Appending content to campaign:", {
-                type: content.type,
-                url: content.url || null,
-                content: content.content,
-                files: filePaths,
-            });
-
+            // Add content
             selectedCreator.content.push({
                 type: content.type,
                 url: content.url || null,
                 content: content.content,
-                files: filePaths,
+                files: imageFiles ? imageFiles.map((file) =>
+                    "/uploads/" + file.filename
+                ) : [],
             });
 
             await campaign.save();
-            console.log("Campaign content saved");
+
 
             await NotificationService.sendNotification(
                 req.app.get('io'),
-                req.user.id,
-                req.params.creatorId,
+                req.user.id,  // sender
+                req.params.creatorId, // receiver
                 `You have submitted your work for the campaign "${campaign.title}"`,
-                "/dashboard/campaigns",
+                "/dashboard/campaigns-details/" + campaignId,
             );
-            console.log("Notification sent to creator");
 
+            // Send notification to the brand
             await NotificationService.sendNotification(
                 req.app.get('io'),
-                req.user.id,
-                campaign.brandId,
+                req.user.id,  // sender
+                campaign.brandId, // receiver
                 `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
-                "/dashboard/campaigns",
+                "/dashboard/campaigns-details/" + campaignId,
             );
-            console.log("Notification sent to brand");
         }
 
         if (isIndependent) {
-            console.log("Processing as independent post");
-
             const linkedinToken = user.linkedin.access_token;
             const linkedinId = user.linkedin.id;
-
-            console.log("Sharing on LinkedIn with:", {
-                linkedinId,
-                content: content.content,
-                imageCount: imageFiles?.length || 0,
-            });
-
-            const res = await shareLinkedIn(
+            await shareLinkedIn(
                 imageFiles,
                 linkedinToken,
                 linkedinId,
                 content.content,
                 "IMAGE"
             );
-
-            console.log("LinkedIn share result:", res);
         }
 
-        console.log("Post submitted successfully");
+
         return {
             message: "Post shared successfully",
         };
     },
-    
 
     async acceptWork(campaignId, creatorId, postId) {
         const campaign = await Campaign.findById(campaignId);
@@ -381,9 +380,11 @@ const CampaignService = {
             "IMAGE"
         );
 
+        console.log(res);
+
         post.urnli = res.id;
         post.url = "https://www.linkedin.com/embed/feed/update/" + res.id;
-        post.type = "ai_text_creator";
+        post.type = "AI Text Creator";
         // Update status
         selectedCreator.status = "done";
         await campaign.save();
@@ -424,38 +425,22 @@ const CampaignService = {
 
     async getCampaignAnalytics(req, campaignId) {
         try {
-            // const userId = req.user.id;
-
-            // Check if the user is a brand
-            // const user = await User.findById(userId);
-            // if (!user || user.userType !== "brand") {
-            //     throw new Error("Unauthorized access");
-            // }
-
-            console.log(campaignId);
             const campaign = await Campaign.findById(campaignId)
                 .populate("brandId", "name email profileImage socialMediaLinks")
                 .populate("selectedCreators.creatorId", "name email profileImage");
-            console.log(campaign);
             if (!campaign) {
                 throw new Error("Campaign not found");
             }
-
             const analytics = {
-                totalCreators: campaign.selectedCreators.length,
-                completedCreators: campaign.selectedCreators.filter(
-                    (c) => c.status === "done"
-                ).length,
-                pendingCreators: campaign.selectedCreators.filter(
-                    (c) => c.status === "pending"
-                ).length,
-                rejectedCreators: campaign.selectedCreators.filter(
-                    (c) => c.status === "rejected"
-                ).length,
-                totalContent: campaign.selectedCreators.reduce(
-                    (acc, creator) => acc + creator.content.length,
-                    0
-                ),
+                totalContent: campaign.selectedCreators.length,
+                contentDistribution: campaign.selectedCreators.map((creator) => ({
+                    label: creator.creatorId.name,
+                    count: creator.content.length,
+                })),
+                contentCountByType: campaign.selectedCreators.map((creator) => ({
+                    label: creator.status,
+                    count: creator.content.length,
+                })),
             };
 
             return { campaign, analytics };
@@ -465,6 +450,7 @@ const CampaignService = {
             throw new Error("Campaign not found");
         }
     },
+    
 };
 
 export default CampaignService;

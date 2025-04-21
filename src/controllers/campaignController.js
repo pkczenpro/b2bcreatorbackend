@@ -54,6 +54,7 @@ export const getCampaignById = async (req, res) => {
 export const applyToCampaign = async (req, res) => {
     try {
         const campaign = await CampaignService.applyToCampaign(
+            req,
             req.params.campaignId,
             req.user.id,
             req.body.amount
@@ -229,6 +230,9 @@ export const generateCampaignPostContent = async (req, res) => {
         - Product Details: ${selectedProduct}
         - Make sure the post is not more than 300 words and is tailored for LinkedIn to drive awareness for the ${brandName} brand.
         - Add emojies to make it more engaging.
+        - Today's date is ${new Date().toLocaleDateString()}
+        
+           
         `;
 
         const post = await generatePost(campaignPrompt);
@@ -253,7 +257,6 @@ export const getLinkedInAnalytics = async (req, res) => {
 export const getCampaignAnalytics = async (req, res) => {
     try {
         const campaignId = req.params.campaignId;
-        console.log("Campaign ID:", campaignId);
         const analytics = await CampaignService.getCampaignAnalytics(req, campaignId);
         res.status(200).json(analytics);
     } catch (error) {
@@ -320,7 +323,7 @@ export const generateCarouselMakerContent = async (req, res) => {
                 - "editableTopic" should be **hidden**
                 - "editableTitle" is the main heading
                 - "editableTagline" is the body/content for each slide
-            
+            12. If Date is used in the post, make sure to use the current date in the format of "MM/DD/YYYY"
             ---
             
             ✅ **Your Response Format**:

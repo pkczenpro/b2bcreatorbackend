@@ -2,7 +2,12 @@ import axios from "axios";
 import fetch from "node-fetch";
 
 export const shareLinkedIn = async (files, accessToken, userId, postContent, mediaType) => {
-    const mediaUrls = files?.map(file => `${process.env.DOMAIN}/uploads/${file.filename}`);
+    const mediaUrls = files?.map(file =>
+        file?.filename
+            ? `${process.env.DOMAIN}/uploads/${file.filename}`
+            : `${process.env.DOMAIN}${file}`
+    );
+
     try {
         let mediaUrns = [];
 
