@@ -366,6 +366,17 @@ export const generateCarouselMakerContent = async (req, res) => {
     }
 };
 
+export const schedulePost = async (req, res) => {
+    try {
+        const scheduledPost = await CampaignService.schedulePost(req, res);
+        res.status(200).json(scheduledPost);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+
+
 export default {
     createCampaign,
     getAllCampaigns,
@@ -385,5 +396,6 @@ export default {
     acceptWork,
     getLinkedInAnalytics,
     getCampaignAnalytics,
-    generateCarouselMakerContent
+    generateCarouselMakerContent,
+    schedulePost
 };

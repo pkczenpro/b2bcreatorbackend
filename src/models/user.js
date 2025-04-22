@@ -119,6 +119,7 @@ const userSchema = new mongoose.Schema({
             hookType: { type: String, required: false },
             uploadedImages: { type: [String], required: false },
             isCampaignPost: { type: Boolean, required: false, default: false },
+            category: { type: String, required: false },
             createdAt: { type: Date, required: true, default: Date.now },
         },
     ],

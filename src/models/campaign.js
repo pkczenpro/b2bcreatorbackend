@@ -2,36 +2,35 @@ import mongoose from "mongoose";
 
 const campaignSchema = new mongoose.Schema(
     {
-        brandId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the brand that created the campaign
+        brandId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         title: { type: String, required: true },
         description: { type: String, required: true },
-        tags: [{ type: String }], // Categories, e.g., ["tech", "fashion"]
-        contentType: [{ type: String }], // Type of content, e.g., ["image", "video", "blog"]
+        tags: [{ type: String }],
+        contentType: [{ type: String }],
         goalsAndDeliverables: { type: String, required: true },
         status: { type: String, required: true },
         startDate: { type: Date, required: true },
         endDate: { type: Date, required: true },
-        budget: { type: Number, required: true }, // Budget in USD
-        coverImage: { type: String, required: false }, // Cover image URL
-        // Selected creators with details
+        budget: { type: Number, required: true },
+        coverImage: { type: String, required: false },
         selectedCreators: [
             {
-                creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the creator
-                status: { type: String, default: "pending" }, // Status of collaboration
-                amount: { type: Number, required: false }, // Amount allocated for this creator
-                approved: { type: Boolean, default: false }, // Approval status
+                creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+                status: { type: String, default: "pending" },
+                amount: { type: Number, required: false },
+                approved: { type: Boolean, default: false },
                 content: [
                     {
-                        type: { type: String, required: false }, // e.g., "image", "video", "blog"
-                        url: { type: String, required: false }, // URL of the content
-                        content: { type: String, required: false }, // Description of the content
-                        files: [{ type: String }], // File URLs
-                        urnli: { type: String, required: false }, // LinkedIn URN
+                        type: { type: String, required: false },
+                        url: { type: String, required: false },
+                        content: { type: String, required: false },
+                        files: [{ type: String }],
+                        urnli: { type: String, required: false },
                         createdAt: { type: Date, default: Date.now },
                     },
                 ],
-                createDate: { type: Date, default: Date.now }, // Date when the creator was selected
-                updatedAt: { type: Date, default: Date.now }, // Date when the creator was last updated
+                createDate: { type: Date, default: Date.now },
+                updatedAt: { type: Date, default: Date.now },
             },
         ],
     },

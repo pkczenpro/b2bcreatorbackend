@@ -1,49 +1,56 @@
 // /src/utils/cronScheduler.js
 import cron from 'node-cron';
-import { shareLinkedIn } from "./shareLinkedIn.js";
-import Campaign from './models/Campaign.js'; // Assuming you have the Campaign model
-
-// Schedule a task to run every minute
+import ScheduledPost from '../models/scheduledPost.js'; // adjust path as needed
+import { shareLinkedIn } from './shareLinkedIn.js';
+import Notification from '../models/notification.js';
+// Run every 30second
 cron.schedule('* * * * *', async () => {
-    console.log('Running post scheduler every minute');
+    console.log('⏰ Running scheduled post check...');
 
     try {
-        // Find active campaigns that have scheduled posts
-        const campaigns = await Campaign.find({
-            status: 'active',
-            scheduledPost: { $exists: true, $ne: null },
-            'scheduledPost.date': { $lte: new Date() }
-        });
+        // Find scheduled posts that are due and not yet posted
+        const duePosts = await ScheduledPost.find({
+            scheduledDate: { $lte: new Date() },
+            status: "pending"
+        }).populate('userId');
+        if (duePosts.length === 0) {
+            console.log('No scheduled posts due at this time');
+            return;
+        }
+        for (const post of duePosts) {
+            const user = post.userId;
+            // Skip if user doesn't have LinkedIn connected
+            if (!user?.linkedin?.access_token || !user?.linkedin?.id) {
+                console.warn(`⚠️ Skipping user ${user?._id}: LinkedIn not connected`);
+                continue;
+            }
 
-        // Process each campaign
-        for (const campaign of campaigns) {
-            const scheduledPost = campaign.scheduledPost;
-            const postDate = new Date(scheduledPost.date);
-            const currentDate = new Date();
+            try {
+                const res = await shareLinkedIn(
+                    post.files || [],
+                    user.linkedin.access_token,
+                    user.linkedin.id,
+                    post.textContent,
+                    'IMAGE'
+                );
 
-            if (postDate <= currentDate) {
-                const linkedinToken = campaign.brandId.linkedin.access_token;
-                const linkedinId = campaign.brandId.linkedin.id;
-                const postContent = scheduledPost.content;
-                const mediaFiles = scheduledPost.mediaFiles;
+                // Mark as posted
+                post.status = "posted";
+                await post.save();
 
-                try {
-                    // Share the post to LinkedIn
-                    const res = await shareLinkedIn(
-                        mediaFiles,
-                        linkedinToken,
-                        linkedinId,
-                        postContent,
-                        "IMAGE"
-                    );
+                await Notification.create({
+                    sender: user._id,
+                    receiver: user._id,
+                    message: "Your scheduled post has been shared successfully",
+                    link: `/campaigns/${post._id}`,
+                });
 
-                    console.log("Post shared successfully");
-                } catch (error) {
-                    console.error("Error sharing post:", error);
-                }
+                console.log(`✅ Post shared successfully for user ${user._id}`);
+            } catch (err) {
+                console.error(`❌ Failed to post for user ${user._id}:`, err.message);
             }
         }
-    } catch (error) {
-        console.error("Error fetching campaigns:", error);
+    } catch (err) {
+        console.error('❌ Error in cron job:', err.message);
     }
 });

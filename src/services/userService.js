@@ -625,7 +625,7 @@ const UserService = {
 
 
     async saveDraft(req, res) {
-        const { postContent, selectedCampaign, selectedProduct, brandName, hookType, uploadedImages, createdAt, isCampaignPost } = req.body;
+        const { postContent, selectedCampaign, selectedProduct, brandName, hookType, uploadedImages, createdAt, isCampaignPost, category } = req.body;
         const userId = req.user.id;
 
         // Format the draft data according to the schema requirements
@@ -638,6 +638,7 @@ const UserService = {
             uploadedImages: Array.isArray(uploadedImages) ? uploadedImages : [],
             createdAt: createdAt,
             isCampaignPost: isCampaignPost === "true" ? true : false,
+            category: category || "",
         };
 
         const draft = await UserRepository.createDraft(userId, draftData);

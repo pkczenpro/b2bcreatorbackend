@@ -3,6 +3,7 @@ import Campaign from "../models/campaign.js";
 import User from "../models/user.js";
 import { shareLinkedIn } from "../utils/shareLinkedIn.js";
 import NotificationService from "./notificationService.js";
+import ScheduledPost from "../models/scheduledPost.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const CampaignService = {
@@ -249,7 +250,6 @@ const CampaignService = {
         await creator.save();
         return creator;
     },
-
     async acceptCreator(campaignId, creatorId, status) {
         const campaign = await Campaign.findById(campaignId);
         if (!campaign) throw new Error("Campaign not found");
@@ -267,7 +267,6 @@ const CampaignService = {
         await campaign.save();
         return campaign;
     },
-
     async submitWork(req, campaignId, creatorId, content) {
         // type, url, content, images, video
         if (!req.files["images"] && content.content === "") {
@@ -352,7 +351,6 @@ const CampaignService = {
             message: "Post shared successfully",
         };
     },
-
     async acceptWork(campaignId, creatorId, postId) {
         const campaign = await Campaign.findById(campaignId);
         if (!campaign) throw new Error("Campaign not found");
@@ -390,8 +388,6 @@ const CampaignService = {
         await campaign.save();
         return campaign;
     },
-
-
     async getLinkedInAnalytics(req, contentId) {
 
         const user_id = req.user.id;
@@ -422,7 +418,6 @@ const CampaignService = {
             return { message: "Failed to get LinkedIn analytics", error: responseData };
         }
     },
-
     async getCampaignAnalytics(req, campaignId) {
         try {
             const campaign = await Campaign.findById(campaignId)
@@ -450,7 +445,41 @@ const CampaignService = {
             throw new Error("Campaign not found");
         }
     },
-    
+    async schedulePost(req, res) {
+        // type, url, content, images, video
+        if (!req.files["images"] && content.content === "") {
+            throw new Error("A content or images are required");
+        }
+        const imageFiles = req.files["images"];
+
+
+        const { textContent, files, type, scheduledDate } = req.body;
+        const userId = req.user.id;
+        // check if scheduled date is in the future
+        if (scheduledDate < new Date()) {
+            throw new Error("Scheduled date must be in the future");
+        }
+
+        // check if user has linkedin access token
+        const user = await User.findById(userId);
+        if (user?.linkedin?.access_token === null || user?.linkedin?.access_token === undefined) {
+            return {
+                message: "Creator has not linked their LinkedIn account",
+                error_code: 400,
+            };
+        }
+
+        const scheduledPost = await ScheduledPost.create({
+            userId,
+            textContent,
+            files: imageFiles ? imageFiles.map((file) =>
+                "/uploads/" + file.filename
+            ) : [],
+            type,
+            scheduledDate
+        });
+        return scheduledPost;
+    },
 };
 
 export default CampaignService;

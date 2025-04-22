@@ -70,4 +70,14 @@ router.get('/analytics/:campaignId', CampaignController.getCampaignAnalytics);
 // generate carousel maker content
 router.post('/generate-carousel', authenticate, CampaignController.generateCarouselMakerContent);
 
+// schedule post
+router.post(
+    '/schedule-post',
+    authenticate,
+    upload.fields([
+        { name: "images", maxCount: 10 },
+    ]),
+    CampaignController.schedulePost
+);
+
 export default router;
