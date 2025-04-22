@@ -447,13 +447,13 @@ const CampaignService = {
     },
     async schedulePost(req, res) {
         // type, url, content, images, video
-        if (!req.files["images"] && content.content === "") {
+        if (!req.files["images"] && req.body.textContent === "") {
             throw new Error("A content or images are required");
         }
         const imageFiles = req.files["images"];
 
 
-        const { textContent, files, type, scheduledDate } = req.body;
+        const { textContent, type, scheduledDate } = req.body;
         const userId = req.user.id;
         // check if scheduled date is in the future
         if (scheduledDate < new Date()) {
