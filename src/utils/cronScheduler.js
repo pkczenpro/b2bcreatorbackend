@@ -52,7 +52,7 @@ cron.schedule('* * * * *', async () => {
                 await Notification.create({
                     sender: user._id,
                     receiver: user._id,
-                    message: "Your scheduled post has been shared successfully",
+                    message: `Great news! Your post "${post.label}" has been shared successfully 🎉`,
                     link: `/campaigns/${post._id}`,
                 });
 
