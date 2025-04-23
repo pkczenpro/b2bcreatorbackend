@@ -28,13 +28,13 @@ cron.schedule('* * * * *', async () => {
             }
 
             try {
-                // const res = await shareLinkedIn(
-                //     post.files || [],
-                //     user.linkedin.access_token,
-                //     user.linkedin.id,
-                //     post.textContent,
-                //     'IMAGE'
-                // );
+                const res = await shareLinkedIn(
+                    post.files || [],
+                    user.linkedin.access_token,
+                    user.linkedin.id,
+                    post.textContent,
+                    'IMAGE'
+                );
 
                 // Mark as posted
                 post.status = "posted";
