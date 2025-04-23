@@ -1,8 +1,10 @@
 // /src/utils/cronScheduler.js
 import cron from 'node-cron';
-import ScheduledPost from '../models/scheduledPost.js'; // adjust path as needed
+import ScheduledPost from '../models/scheduledPost.js';
 import { shareLinkedIn } from './shareLinkedIn.js';
 import Notification from '../models/notification.js';
+import User from '../models/user.js';
+
 // Run every 30second
 cron.schedule('* * * * *', async () => {
     console.log('⏰ Running scheduled post check...');
@@ -26,17 +28,26 @@ cron.schedule('* * * * *', async () => {
             }
 
             try {
-                const res = await shareLinkedIn(
-                    post.files || [],
-                    user.linkedin.access_token,
-                    user.linkedin.id,
-                    post.textContent,
-                    'IMAGE'
-                );
+                // const res = await shareLinkedIn(
+                //     post.files || [],
+                //     user.linkedin.access_token,
+                //     user.linkedin.id,
+                //     post.textContent,
+                //     'IMAGE'
+                // );
 
                 // Mark as posted
                 post.status = "posted";
                 await post.save();
+
+                await User.updateOne(
+                    { _id: user._id, "calendar.postId": post._id },
+                    {
+                        $set: {
+                            "calendar.$.status": "posted",
+                        },
+                    }
+                );
 
                 await Notification.create({
                     sender: user._id,

@@ -267,8 +267,6 @@ export const getCampaignAnalytics = async (req, res) => {
 export const generateCarouselMakerContent = async (req, res) => {
     const { posts, campaignId, aiPrompt } = req.body;
 
-    console.log("Received posts:", posts);
-
     try {
         const campaignData = await campaign.findById(campaignId);
 
@@ -338,12 +336,7 @@ export const generateCarouselMakerContent = async (req, res) => {
             Let’s create an amazing carousel that resonates with LinkedIn users!
             `;
 
-
-
             const contentPrompt = await generatePost(prompt);
-
-
-            console.log("Generated content:", contentPrompt);
 
             let newPostData;
             try {

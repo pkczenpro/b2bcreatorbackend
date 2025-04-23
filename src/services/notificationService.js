@@ -12,9 +12,6 @@ const NotificationService = {
         const populatedNotification = await Notification.findById(notification._id)
             .populate("sender", "name email") // Populate sender details
 
-        console.log("Notification sent:", populatedNotification);
-        // Emit the notification to the receiver
-
         io.to(receiverId.toString()).emit('newNotification', populatedNotification);
     }
 };

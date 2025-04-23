@@ -72,9 +72,7 @@ const lastSeen = new Map(); // Map<userId, timestamp>
 
 // Socket.IO Events
 io.on("connection", (socket) => {
-    console.log("A user connected:", socket.id);
     socket.on("join", (userId) => {
-        console.log(`User ${userId} joined the chat`);
         activeUsers.set(socket.id, {
             userId,
             connectedAt: new Date(),
@@ -100,10 +98,7 @@ io.on("connection", (socket) => {
             userId: user.userId,
             connectedAt: user.connectedAt,
         }));
-
         io.emit("activeUsers", usersWithTimes);
-
-        console.log("A user disconnected:", socket.id);
     });
 
 });

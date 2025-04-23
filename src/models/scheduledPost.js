@@ -9,6 +9,7 @@ const scheduledPostSchema = new mongoose.Schema({
     type: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
+    label: { type: String, required: false },
 });
 
 const ScheduledPost = mongoose.model("ScheduledPost", scheduledPostSchema);

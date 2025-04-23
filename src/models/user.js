@@ -101,6 +101,9 @@ const userSchema = new mongoose.Schema({
             title: { type: String, required: false },
             date: { type: Date, required: false },
             color: { type: String, required: false },
+            type: { type: String, required: false }, // e.g., "scheduled post", "campaign post", "independent post"
+            status: { type: String, required: false }, // e.g., "pending", "completed", "failed"
+            postId: { type: mongoose.Schema.Types.ObjectId, ref: "ScheduledPost", required: false },
         },
     ],
 

@@ -122,7 +122,7 @@ const CampaignService = {
         if (!mongoose.Types.ObjectId.isValid(campaignId)) {
             throw new Error("Invalid Campaign ID");
         }
-        // console.log(campaignId);
+
         const campaign = await Campaign.findById(campaignId);
         if (!campaign) throw new Error("Campaign not found");
 
@@ -237,7 +237,7 @@ const CampaignService = {
         if (!creator) throw new Error("Creator not found");
 
         // Check if reviewer has already rated the creator in this campaign
-        console.log(creator.reviews);
+
         const alreadyReviewed = creator.reviews.find(
             (r) => r.reviewerId.toString() === reviewerId && r.campaignId?.toString() === campaignId
         );
@@ -253,8 +253,7 @@ const CampaignService = {
     async acceptCreator(campaignId, creatorId, status) {
         const campaign = await Campaign.findById(campaignId);
         if (!campaign) throw new Error("Campaign not found");
-        console.log(campaign.selectedCreators);
-        console.log(creatorId);
+
         // Find the creator i   n the selectedCreators list
         const selectedCreator = campaign.selectedCreators.find(
             (c) => c.creatorId._id.toString() === creatorId
@@ -378,8 +377,6 @@ const CampaignService = {
             "IMAGE"
         );
 
-        console.log(res);
-
         post.urnli = res.id;
         post.url = "https://www.linkedin.com/embed/feed/update/" + res.id;
         post.type = "AI Text Creator";
@@ -446,40 +443,60 @@ const CampaignService = {
         }
     },
     async schedulePost(req, res) {
-        // type, url, content, images, video
-        if (!req.files["images"] && req.body.textContent === "") {
-            throw new Error("A content or images are required");
+        try {
+            const { textContent, type, scheduledDate, label } = req.body;
+            const userId = req.user.id;
+            const imageFiles = req.files?.["images"] || [];
+
+            // Basic validation
+            if (!textContent && imageFiles.length === 0) {
+                throw new Error("Text content or images are required.");
+            }
+
+            // if (!scheduledDate || new Date(scheduledDate) <= new Date()) {
+            //     throw new Error("Scheduled date must be in the future.");
+            // }
+
+            const user = await User.findById(userId);
+            if (!user?.linkedin?.access_token) {
+                throw new Error("Creator has not linked their LinkedIn account.");
+            }
+
+            // Create scheduled post
+            const scheduledPost = await ScheduledPost.create({
+                userId,
+                textContent,
+                files: imageFiles.map(file => "/uploads/" + file.filename),
+                type,
+                scheduledDate,
+                label
+            });
+
+            // Assign random color to calendar entry
+            const randomColors = ["#0078d4", "#0094ff", "#00b5ff", "#00d5ff", "#00f5ff"];
+            const color = randomColors[Math.floor(Math.random() * randomColors.length)];
+
+            // Push to user's calendar
+            await User.findByIdAndUpdate(userId, {
+                $push: {
+                    calendar: {
+                        title: label,
+                        date: scheduledDate,
+                        color,
+                        type,
+                        status: "pending",
+                        postId: scheduledPost._id,
+                    }
+                }
+            });
+
+            return scheduledPost;
+        } catch (err) {
+            console.error("Error scheduling post:", err);
+            throw new Error("Failed to schedule post");
         }
-        const imageFiles = req.files["images"];
+    }
 
-
-        const { textContent, type, scheduledDate } = req.body;
-        const userId = req.user.id;
-        // check if scheduled date is in the future
-        if (scheduledDate < new Date()) {
-            throw new Error("Scheduled date must be in the future");
-        }
-
-        // check if user has linkedin access token
-        const user = await User.findById(userId);
-        if (user?.linkedin?.access_token === null || user?.linkedin?.access_token === undefined) {
-            return {
-                message: "Creator has not linked their LinkedIn account",
-                error_code: 400,
-            };
-        }
-
-        const scheduledPost = await ScheduledPost.create({
-            userId,
-            textContent,
-            files: imageFiles ? imageFiles.map((file) =>
-                "/uploads/" + file.filename
-            ) : [],
-            type,
-            scheduledDate
-        });
-        return scheduledPost;
-    },
 };
 
 export default CampaignService;

@@ -23,7 +23,6 @@ const UserRepository = {
     },
 
     async findUsersByType(userType) {
-        console.log("Finding users by type:", userType); // Debugging
         return await User.find({ userType });
     },
 

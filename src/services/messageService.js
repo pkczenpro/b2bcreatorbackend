@@ -42,7 +42,7 @@ const MessageService = {
             await newMessage.save();
             const io = req.app.get('io');
             if (io) {
-                console.log("receiver", receiver);
+             
                 io.to(receiver.toString()).emit('message', {
                     from: sender,
                     text: message,
@@ -208,7 +208,7 @@ const MessageService = {
             await newMessage.save();
             const io = req.app.get('io');
             if (io) {
-                console.log("receiver", receiver);
+              
                 io.to(receiver.toString()).emit('message', {
                     from: sender,
                     text: filePath,

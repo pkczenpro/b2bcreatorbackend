@@ -89,7 +89,6 @@ const UserController = {
         try {
             const user_id = req.user.id
             const user = await UserService.getUserDetails(user_id);
-            console.log(user)
             res.json({
                 ...user._doc,
                 unreadMessages: user.unReadMessages,

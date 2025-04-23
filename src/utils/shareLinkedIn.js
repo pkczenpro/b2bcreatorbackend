@@ -21,7 +21,6 @@ export const shareLinkedIn = async (files, accessToken, userId, postContent, med
             }
             if (mediaUrns.length === 0) {
                 console.error("Content Sharing Error: Failed to upload media files");
-
                 throw new Error("Failed to upload media files");
             }
         }
@@ -60,11 +59,11 @@ export const shareLinkedIn = async (files, accessToken, userId, postContent, med
             return responseData;
         } else {
             console.error("Content Sharing Error:", responseData);
-            return { message: "Failed to share content", error: responseData };
+            throw new Error("Failed to share content");
         }
     } catch (error) {
         console.error("Content Sharing Error:", error);
-        return { message: "Failed to share content", error: error.message };
+        throw new Error("Failed to share content");
     }
 };
 
@@ -124,7 +123,7 @@ async function uploadMedia(accessToken, ownerUrn, type, mediaUrl) {
         }
     } catch (error) {
         console.error("Error uploading media:", error.response?.data || error.message);
-        return null;
+        throw new Error("Failed to upload media");
     }
 }
 

@@ -297,7 +297,7 @@ const UserService = {
 
         const unReadMessages = await UserRepository.findUnReadMessages(userId);
 
-        console.log("unReadMessages", unReadMessages);
+
         // Optionally exclude sensitive data such as password
         const { password, ...userDetails } = user;
 
@@ -452,7 +452,7 @@ const UserService = {
             case "delete":
                 {
                     const item = user[field].id(itemId);
-                    console.log(item);
+         
                     if (!item) throw new Error(`${field.slice(0, -1)} not found`);
                     item.deleteOne();
                 }
@@ -626,6 +626,7 @@ const UserService = {
 
     async saveDraft(req, res) {
         const { postContent, selectedCampaign, selectedProduct, brandName, hookType, uploadedImages, createdAt, isCampaignPost, category } = req.body;
+        
         const userId = req.user.id;
 
         // Format the draft data according to the schema requirements
