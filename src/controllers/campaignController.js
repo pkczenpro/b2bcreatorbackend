@@ -265,99 +265,75 @@ export const getCampaignAnalytics = async (req, res) => {
 }
 
 export const generateCarouselMakerContent = async (req, res) => {
-    const { posts, campaignId, aiPrompt } = req.body;
+    const {
+        aiPrompt,
+        editableTopic,
+        editableTitle,
+        editableTagline,
+        editableButton,
+    } = req.body;
+
+    if (!aiPrompt || !editableTopic || !editableTitle || !editableTagline || !editableButton) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
 
     try {
-        const campaignData = await campaign.findById(campaignId);
+        const today = new Date().toLocaleDateString();
 
-        if (!campaignData) {
-            return res.status(404).json({ error: "Campaign not found" });
+        const prompt = `
+You are an AI assistant for generating LinkedIn content blocks.
+
+Based on the following user input, generate a JSON response with:
+- topic
+- title
+- tagline
+- button
+
+Do NOT include any explanations or text before or after the JSON.
+
+INPUT:
+- User Prompt: ${aiPrompt}
+- Topic: ${editableTopic}
+- Title: ${editableTitle}
+- Tagline: ${editableTagline}
+- Button: ${editableButton}
+- Date: ${today}
+
+FORMAT:
+{
+  "topic": "string",
+  "title": "string",
+  "tagline": "string",
+  "button": "string"
+}
+`;
+
+        const rawResponse = await generatePost(prompt);
+
+        let data;
+        try {
+            const jsonStart = rawResponse.indexOf('{');
+            const jsonEnd = rawResponse.lastIndexOf('}') + 1;
+            const jsonString = rawResponse.substring(jsonStart, jsonEnd);
+            data = JSON.parse(jsonString);
+        } catch (parseError) {
+            console.error("JSON parse error:", parseError, "Raw response:", rawResponse);
+            return res.status(500).json({ error: "Invalid JSON response from content generator" });
         }
 
-        const results = await Promise.all(posts.map(async (post) => {
-            const prompt = `
-            You are an expert AI content creator and LinkedIn strategist. Your task is to transform the given JSON into a high-quality LinkedIn carousel post, optimized for attention, clarity, and conversion.
-            
-            ---
-            
-            🎯 **Objective**:
-            Using the provided JSON structure, improve and fill in the carousel content while maintaining the original structure. This carousel will be posted on LinkedIn, so make it professional, concise, visually appealing, and engaging.
-            
-            ---
-            
-            ✍️ **Creator’s Notes & Style Guide & Content Asked**:
-            ${aiPrompt}
-            
-            ---
-            
-            🧩 **Post JSON Input**:
-            ${JSON.stringify(post.postData, null, 2)}
-            
-            ---
-            
-            **Instructions** (Follow these rules strictly):
-            
-            1. Fill in any empty "label" fields with engaging and relevant content.
-            2. Rewrite existing "label" fields to be more professional, polished, and suitable for LinkedIn.
-            3. Add relevant emojis only when they improve clarity or tone — avoid overuse.
-            4. Adjust design-related properties as needed:
-               - "fontSize" (follow title-specific formula below)
-               - "color"
-               - "textAlign"
-               - "hidden" (set to true for unneeded elements)
-            5. You may also modify:
-               - "bgColor" for contrast and readability
-               - "editableButton" to drive CTA
-            6. Do NOT change:
-               - "editableProfileName object"
-               - "editableProfileUsername object"
-               - "profileImage object"
-            7. Do NOT add or remove any keys. Keep the **exact same JSON structure**.
-            8. Use concise, impactful language — ideal for carousel reading (no fluff).
-            9. Apply this fontSize rule to **title labels**:
-               \`fontSize = Math.max(32, 64 - [title text length])\`
-            10. First post must act as a **hook** to grab attention.
-            11. All following posts are **content posts**:
-                - "editableTopic" should be **hidden**
-                - "editableTitle" is the main heading
-                - "editableTagline" is the body/content for each slide
-            12. If Date is used in the post, make sure to use the current date in the format of "MM/DD/YYYY"
-            ---
-            
-            ✅ **Your Response Format**:
-            
-            - Respond with **ONLY** the updated JSON (valid format).
-            - No extra explanation, comments, or text outside the JSON.
-            - Structure and key names must remain unchanged.
-            - Ensure the JSON is parseable.
-            
-            ---
-            
-            Let’s create an amazing carousel that resonates with LinkedIn users!
-            `;
+        res.status(200).json({
+            editableTopic: data.topic,
+            editableTitle: data.title,
+            editableTagline: data.tagline,
+            editableButton: data.button,
+        });
 
-            const contentPrompt = await generatePost(prompt);
-
-            let newPostData;
-            try {
-                newPostData = JSON.parse(contentPrompt);
-            } catch (err) {
-                console.error("Failed to parse GPT response for post index:", post.index);
-                throw new Error("Invalid GPT response format.");
-            }
-
-            return {
-                ...post,
-                postData: newPostData,
-            };
-        }));
-
-        res.status(200).json(results);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error("Error generating content:", error);
+        res.status(500).json({ error: error.message || "Internal Server Error" });
     }
 };
+
 
 export const schedulePost = async (req, res) => {
     try {

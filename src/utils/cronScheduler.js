@@ -53,7 +53,7 @@ cron.schedule('* * * * *', async () => {
                     sender: user._id,
                     receiver: user._id,
                     message: `Great news! Your post "${post.label}" has been shared successfully 🎉`,
-                    link: `/campaigns/${post._id}`,
+                    link: null,
                 });
 
                 console.log(`✅ Post shared successfully for user ${user._id}`);
