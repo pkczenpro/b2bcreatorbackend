@@ -218,7 +218,7 @@ const UserController = {
             const data = brands.map(creator => {
                 return {
                     _id: creator._id,
-                    name: creator.name || "",
+                    name: creator.profileName || "",
                     email: creator.email || "",
                     region: creator.location || "",
                     followers: creator.followers || 0,
@@ -256,8 +256,8 @@ const UserController = {
                 io: req.app.get("io"),
                 senderId: req.user.id,
                 receiverId: req.params.brandId,
-                message: `🙌 You’ve got a new follower — ${response.name}!`,
-                link: `/dashboard/user-preview/${req.user.id}`,
+                message: `🙌 You’ve got a new follower — ${response.profileName}!`,
+                link: null,
             });
 
             res.json(response);

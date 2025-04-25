@@ -131,6 +131,7 @@ const MessageService = {
                     $project: {
                         _id: "$user._id",
                         name: "$user.name",
+                        profileName: "$user.profileName",
                         image: "$user.profileImage",
                         message: 1,
                         timestamp: 1,
@@ -174,7 +175,7 @@ const MessageService = {
 
             // Fetch contacts directly filtered by targetUserType
             let contacts = await User.find(targetUserType ? { userType: targetUserType } : {})
-                .select("_id name profileImage userType")
+                .select("_id profileName name profileImage userType")
                 .lean();
 
             const defaultImage = `${process.env.DOMAIN}/default.png`;

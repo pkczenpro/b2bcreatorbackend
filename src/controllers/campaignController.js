@@ -73,7 +73,7 @@ export const removeCreator = async (req, res) => {
             req.app.get('io'),
             req.user.id,  // sender
             req.params.creatorId, // receiver
-            `You've been removed from the “${campaign.title}” campaign. If you have any questions, feel free to reach out!`,
+            `You've been removed from the "${campaign.title}" campaign. If you have any questions, feel free to reach out!`,
             null
         );
 
@@ -173,6 +173,16 @@ export const acceptCreator = async (req, res) => {
             "/dashboard/campaigns-details/" + req.params.campaignId,
         );
 
+        // send message to creator
+        await MessageService.saveMessage(
+            req,
+            req.user.id,
+            req.params.creatorId,
+            `🎉 Great news! You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
+        );
+
+        // send using i
+
         res.status(200).json(campaign);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -208,7 +218,7 @@ export const acceptWork = async (req, res) => {
             req,
             req.user.id,
             req.params.creatorId,
-            `🎉 Great news! Your work for the “${campaign.title}” campaign has been accepted by the brand and shared on LinkedIn!`,
+            `🎉 Great news! Your work for the "${campaign.title}" campaign has been accepted by the brand and shared on LinkedIn!`,
         );
 
         res.status(200).json(campaign);
@@ -264,68 +274,58 @@ export const getCampaignAnalytics = async (req, res) => {
     }
 }
 
-export const generateCarouselMakerContent = async (req, res) => {
-    const {
-        aiPrompt,
-        editableTopic,
-        editableTitle,
-        editableTagline,
-        editableButton,
-    } = req.body;
+const generateSection = async (label, input, today, defaultText) => {
+    const prompt = `
+You are an AI assistant generating only the "${label}" text for a LinkedIn carousel.
 
-    if (!aiPrompt || !editableTopic || !editableTitle || !editableTagline || !editableButton) {
-        return res.status(400).json({ error: "Missing required fields" });
+${label === "title" ? `For the title, create an engaging hook that:
+- Starts with a surprising fact, question, or bold statement
+- Creates curiosity and makes people want to read more
+- Uses power words and emotional triggers
+- Is concise and impactful
+- Maximum 40 characters
+- Include relevant emojis to make it more engaging
+
+Example hooks:
+"🚀 90% of startups fail because of this..."
+"💡 The secret to viral content? It's not what you think"
+"🔥 Stop wasting time on social media! Here's why..."` : ''}
+
+Respond with ONLY the "${label}" content as a plain string. No quotes, no formatting, no explanations.
+
+INPUT:
+- User Prompt: ${input}
+- input name: ${defaultText}
+`
+
+    const rawResponse = await generatePost(prompt);
+
+    // Clean the response in case there are extra quotes or whitespace
+    return rawResponse.trim().replace(/^"(.*)"$/, '$1');
+};
+
+export const generateCarouselMakerContent = async (req, res) => {
+    const { aiPrompt } = req.body;
+
+    if (!aiPrompt) {
+        return res.status(400).json({ error: "Missing required 'aiPrompt'" });
     }
 
     try {
         const today = new Date().toLocaleDateString();
 
-        const prompt = `
-You are an AI assistant for generating LinkedIn content blocks.
-
-Based on the following user input, generate a JSON response with:
-- topic
-- title
-- tagline
-- button
-
-Do NOT include any explanations or text before or after the JSON.
-
-INPUT:
-- User Prompt: ${aiPrompt}
-- Topic: ${editableTopic}
-- Title: ${editableTitle}
-- Tagline: ${editableTagline}
-- Button: ${editableButton}
-- Date: ${today}
-
-FORMAT:
-{
-  "topic": "string",
-  "title": "string",
-  "tagline": "string",
-  "button": "string"
-}
-`;
-
-        const rawResponse = await generatePost(prompt);
-
-        let data;
-        try {
-            const jsonStart = rawResponse.indexOf('{');
-            const jsonEnd = rawResponse.lastIndexOf('}') + 1;
-            const jsonString = rawResponse.substring(jsonStart, jsonEnd);
-            data = JSON.parse(jsonString);
-        } catch (parseError) {
-            console.error("JSON parse error:", parseError, "Raw response:", rawResponse);
-            return res.status(500).json({ error: "Invalid JSON response from content generator" });
-        }
+        const [topic, title, tagline, button] = await Promise.all([
+            generateSection("topic", aiPrompt, today, "Create a short, impactful topic that sets the stage for the carousel. Maximum 10 characters. Make it intriguing and relevant to the content."),
+            generateSection("title", aiPrompt, today, "Create an attention-grabbing hook that makes people stop scrolling. Use power words, questions, or surprising facts. Maximum 40 characters. Include relevant emojis."),
+            generateSection("tagline", aiPrompt, today, "Write a compelling tagline that builds on the hook and creates curiosity. Use emotional triggers and make it personal. Maximum 20 characters."),
+            generateSection("button", aiPrompt, today, "Create a clear, action-oriented button text that encourages engagement. Maximum 5 characters. Use words like 'Read', 'Learn', 'See', 'Try'."),
+        ]);
 
         res.status(200).json({
-            editableTopic: data.topic,
-            editableTitle: data.title,
-            editableTagline: data.tagline,
-            editableButton: data.button,
+            editableTopic: topic,
+            editableTitle: title,
+            editableTagline: tagline,
+            editableButton: button,
         });
 
     } catch (error) {
