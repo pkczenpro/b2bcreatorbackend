@@ -19,7 +19,7 @@ const CampaignService = {
      * Get all campaigns (with optional filtering)
      */
     async getAllCampaigns(filter = {}) {
-        return await Campaign.find(filter).populate("brandId", "name email profileImage socialMediaLinks");
+        return await Campaign.find(filter).populate("brandId", "name profileName email profileImage socialMediaLinks category subCategory");
     },
 
     async getRelatedCampaigns(brandId) {

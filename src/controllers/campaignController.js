@@ -22,24 +22,38 @@ export const createCampaign = async (req, res) => {
 export const getAllCampaigns = async (req, res) => {
     try {
         const campaigns = await CampaignService.getAllCampaigns();
-        const data = campaigns.map(campaign => ({
-            id: campaign?._id,
-            title: campaign?.title,
-            company: campaign?.brandId?.name || null,
-            image: campaign?.brandId?.profileImage,
-            description: campaign?.description,
-            channels: campaign?.brandId?.socialMediaLinks.map(link => link?.value ? link?.platform : null).filter(Boolean).join(", ")
-        }));
 
-        const randomizedData = data.sort(() => Math.random() - 0.5);
+        const data = campaigns
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // newest first
+            .map(campaign => ({
+                id: campaign?._id,
+                title: campaign?.title,
+                company: campaign?.brandId?.profileName || null,
+                image: campaign?.brandId?.profileImage,
+                description: campaign?.description,
+                channels: campaign?.brandId?.socialMediaLinks
+                    .map(link => link?.value ? link?.platform : null)
+                    .filter(Boolean)
+                    .join(", "),
+                status: campaign?.status,
+                category: campaign?.brandId?.category,
+                participants: campaign?.selectedCreators?.length,
+                budget: campaign?.budget,
+                startDate: campaign?.startDate,
+                endDate: campaign?.endDate,
+                createdAt: campaign?.createdAt,
+                updatedAt: campaign?.updatedAt,
+                category: campaign?.brandId?.category,
+                subCategory: campaign?.brandId?.subCategory || null,
+            }));
 
-
-        res.status(200).json(randomizedData);
+        res.status(200).json(data); // no random shuffle
     } catch (error) {
         console.error("Error fetching campaigns:", error);
         res.status(400).json({ error: error.message });
     }
 };
+
 
 export const getCampaignById = async (req, res) => {
     try {
