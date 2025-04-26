@@ -2,14 +2,22 @@ import Notification from "../models/notification.js";
 
 export const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ receiver: req.user.id }).sort({ createdAt: -1 })
-      .populate("sender", "name email") // Populate sender details
-      
+    const notifications = await Notification.find({ receiver: req.user.id })
+      .sort({ createdAt: -1 })
+      .populate("sender", "name email");
+
+    // Mark all unread notifications as read
+    await Notification.updateMany(
+      { receiver: req.user.id, isRead: false },
+      { isRead: true }
+    );
+
     res.json(notifications);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const markAsRead = async (req, res) => {
   try {
