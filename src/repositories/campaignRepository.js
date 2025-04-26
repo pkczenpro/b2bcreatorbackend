@@ -21,8 +21,8 @@ const CampaignRepository = {
         return await Campaign.findByIdAndDelete(campaignId);
     },
 
-    async getCampaignsBySelectedCreatorsId(creatorId) {
-        return await Campaign.find({ "selectedCreators.creatorId": creatorId });
+    async getCampaignsBySelectedCreatorsId(creatorId, brandId) {
+        return await Campaign.find({ "selectedCreators.creatorId": creatorId, "brandId": brandId });
     }
 };
 

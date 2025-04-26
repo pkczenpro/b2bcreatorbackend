@@ -452,7 +452,7 @@ const UserService = {
             case "delete":
                 {
                     const item = user[field].id(itemId);
-         
+
                     if (!item) throw new Error(`${field.slice(0, -1)} not found`);
                     item.deleteOne();
                 }
@@ -498,7 +498,7 @@ const UserService = {
                             .map(async (creator) => {
                                 // Assuming that creatorId is the key for finding user
                                 const user = await UserRepository.findUserById(creator.creatorId); // Get the user data
-                                const creatorCampaigns = await CampaignRepository.getCampaignsBySelectedCreatorsId(creator.creatorId); // Get the creator's campaigns
+                                const creatorCampaigns = await CampaignRepository.getCampaignsBySelectedCreatorsId(creator.creatorId, brandId); // Get the creator's campaigns
 
                                 return {
                                     ...creator._doc, // Keep the original creator data
@@ -626,7 +626,7 @@ const UserService = {
 
     async saveDraft(req, res) {
         const { postContent, selectedCampaign, selectedProduct, brandName, hookType, uploadedImages, createdAt, isCampaignPost, category } = req.body;
-        
+
         const userId = req.user.id;
 
         // Format the draft data according to the schema requirements

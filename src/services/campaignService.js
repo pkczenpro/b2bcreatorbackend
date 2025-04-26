@@ -116,7 +116,7 @@ const CampaignService = {
     },
 
     async addToCampaign(req, campaignId, creatorData) {
-        const { creatorId, amount, status = "pending" } = creatorData;
+        const { creatorId, amount, status = "approved" } = creatorData;
 
 
         if (!mongoose.Types.ObjectId.isValid(campaignId)) {
@@ -127,10 +127,10 @@ const CampaignService = {
         if (!campaign) throw new Error("Campaign not found");
 
         // Check if the creator is already added
-        // const alreadyAdded = campaign.selectedCreators.some(
-        //     (c) => c.creatorId.toString() === creatorId.toString()
-        // );
-        // if (alreadyAdded) throw new Error("Creator is already added");
+        const alreadyAdded = campaign.selectedCreators.some(
+            (c) => c.creatorId.toString() === creatorId.toString()
+        );
+        if (alreadyAdded) throw new Error("Creator is already added");
 
         // Add creator
         campaign.selectedCreators.push({ creatorId, amount, status });
@@ -495,8 +495,20 @@ const CampaignService = {
             console.error("Error scheduling post:", err);
             throw new Error("Failed to schedule post");
         }
-    }
+    },
 
+    async hideCampaign(campaignId) {
+        const campaign = await Campaign.findById(campaignId);
+        if (!campaign) {
+            throw new Error('Campaign not found');
+        }
+        const newStatus = !campaign.visibility;
+        return await Campaign.findByIdAndUpdate(
+            campaignId,
+            { visibility: newStatus },
+            { new: true }
+        );
+    }
 };
 
 export default CampaignService;

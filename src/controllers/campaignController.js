@@ -344,6 +344,14 @@ export const schedulePost = async (req, res) => {
     }
 }
 
+export const hideCampaign = async (req, res) => {
+    try {
+        const campaign = await CampaignService.hideCampaign(req.params.campaignId);
+        res.status(200).json(campaign);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
 
 
 export default {
@@ -366,5 +374,6 @@ export default {
     getLinkedInAnalytics,
     getCampaignAnalytics,
     generateCarouselMakerContent,
-    schedulePost
+    schedulePost,
+    hideCampaign
 };

@@ -39,6 +39,9 @@ router.put('/:campaignId', authenticateBrand, CampaignController.updateCampaign)
 // Delete a campaign
 router.delete('/:campaignId', authenticateBrand, CampaignController.deleteCampaign);
 
+// Hide a campaign
+router.put('/:campaignId/hide', authenticateBrand, CampaignController.hideCampaign);
+
 // Rate a creator
 router.post('/:campaignId/creators/:creatorId/rate', authenticateBrand, CampaignController.rateCreator);
 

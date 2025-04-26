@@ -33,6 +33,7 @@ const campaignSchema = new mongoose.Schema(
                 updatedAt: { type: Date, default: Date.now },
             },
         ],
+        visibility: { type: Boolean, default: true },
     },
     { timestamps: true }
 );
