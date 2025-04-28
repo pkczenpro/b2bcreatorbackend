@@ -423,16 +423,11 @@ const CampaignService = {
             if (!campaign) {
                 throw new Error("Campaign not found");
             }
+
             const analytics = {
                 totalContent: campaign.selectedCreators.length,
-                contentDistribution: campaign.selectedCreators.map((creator) => ({
-                    label: creator.creatorId.name,
-                    count: creator.content.length,
-                })),
-                contentCountByType: campaign.selectedCreators.map((creator) => ({
-                    label: creator.status,
-                    count: creator.content.length,
-                })),
+                contentDistribution: this.getContentDistribution(campaign.selectedCreators),
+                contentCountByType: this.getContentCountByType(campaign.selectedCreators),
             };
 
             return { campaign, analytics };
@@ -442,6 +437,46 @@ const CampaignService = {
             throw new Error("Campaign not found");
         }
     },
+
+    getContentDistribution(selectedCreators) {
+        const monthData = {};
+
+        selectedCreators.forEach(creator => {
+            console.log(creator.createDate);
+            const month = new Date(creator.createDate).toLocaleString('default', { month: 'long', year: 'numeric' });
+            console.log(month);
+            if (!monthData[month]) {
+                monthData[month] = 0;
+            }
+
+            monthData[month] += 1;
+        });
+
+        return Object.keys(monthData).map(month => ({
+            label: month,
+            count: monthData[month]
+        }));
+    },
+
+    getContentCountByType(selectedCreators) {
+        const statusData = {};
+
+        selectedCreators.forEach(creator => {
+            const status = creator.status;
+
+            if (!statusData[status]) {
+                statusData[status] = 0;
+            }
+
+            statusData[status] += 1;
+        });
+
+        return Object.keys(statusData).map(status => ({
+            label: status,
+            count: statusData[status]
+        }));
+    },
+
     async schedulePost(req, res) {
         try {
             const { textContent, type, scheduledDate, label } = req.body;
