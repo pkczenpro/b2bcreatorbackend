@@ -156,6 +156,16 @@ export const getRelatedCampaigns = async (req, res) => {
     }
 };
 
+export const getRelatedProducts = async (req, res) => {
+    try {
+        const campaignId = req.params.campaignId;
+        const products = await CampaignService.getRelatedProducts(campaignId);
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
 export const getRelatedCampaignsForCreator = async (req, res) => {
     try {
         const creatorId = req.params.creatorId;
@@ -370,6 +380,16 @@ export const hideCampaign = async (req, res) => {
     }
 }
 
+export const updateCreatorAmount = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const updatedCampaign = await CampaignService.updateCreatorAmount(req, req.params.campaignId, req.params.creatorId, Number(amount));
+        res.status(200).json(updatedCampaign);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
 
 export default {
     createCampaign,
@@ -392,5 +412,7 @@ export default {
     getCampaignAnalytics,
     generateCarouselMakerContent,
     schedulePost,
-    hideCampaign
+    hideCampaign,
+    getRelatedProducts,
+    updateCreatorAmount
 };

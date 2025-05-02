@@ -16,6 +16,11 @@ const invoiceSchema = new mongoose.Schema(
             type: Date,
             default: Date.now,
         },
+        creatorId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
         items: [
             {
                 description: {
@@ -28,17 +33,25 @@ const invoiceSchema = new mongoose.Schema(
                 },
                 price: {
                     type: Number,
-                    required: true,
+                    required: false,
                 },
                 total: {
                     type: Number,
-                    required: true,
+                    required: false,
+                },
+                files: [
+                    {
+                        type: String,
+                    },
+                ],
+                content: {
+                    type: String,
                 },
             },
         ],
         totalAmount: {
             type: Number,
-            required: true,
+            required: false,
         },
         status: {
             type: String,

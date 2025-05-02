@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGO_URI, {
     .catch((err) => console.error(err));
 
 // YOUR CAMPAIGN ID HERE
-const CAMPAIGN_ID = "680cbc7d3322786f1436b40a"; // <-- put your campaign id
+const CAMPAIGN_ID = "67f405cb91053314f4ebe014"; // <-- put your campaign id
 
 // Function to add creators to the campaign
 const addCreatorsToCampaign = async () => {
@@ -30,6 +30,12 @@ const addCreatorsToCampaign = async () => {
             return;
         }
 
+        const randomMOnthNumber = faker.number.int({ min: 1, max: 12 });
+
+        const randomDate = new Date(
+            faker.date.past(randomMOnthNumber, new Date())
+        );
+
         // Prepare selectedCreators data
         const selectedCreators = creators.map((creator) => ({
             creatorId: creator._id,
@@ -38,7 +44,7 @@ const addCreatorsToCampaign = async () => {
             ),
             amount: faker.number.int({ min: 100, max: 1000 }),
             approved: faker.datatype.boolean(),
-            createDate: new Date(),
+            createDate: randomDate,
             updatedAt: new Date(),
         }));
 

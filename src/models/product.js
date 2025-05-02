@@ -1,17 +1,5 @@
 import mongoose from "mongoose";
 
-// productName: "",
-// productLogo: null,
-// publicVisibility: false,
-// productDescription: "",
-// productImages: [] as File[],
-// productLink: "",
-// loomVideoLink: "",
-// g2Link: "",
-// capterraLink: "",
-// additionalDetails: "",
-// productHunt: "",
-
 const productSchema = new mongoose.Schema(
     {
         brandId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the brand that owns the product

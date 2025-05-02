@@ -489,46 +489,64 @@ const UserService = {
 
         const brandCampaigns = await CampaignRepository.findCampaignsByBrandId(brandId);
         const brandProducts = await ProductRepository.findByBrand(brandId);
-        const brandPartnerships = await Promise.all(
+
+        const brandPartnershipsRaw = await Promise.all(
             brandCampaigns.map(async (campaign) => {
                 if (campaign.selectedCreators.length > 0) {
                     return await Promise.all(
                         campaign.selectedCreators
                             .filter((creator) => creator.status === "done")
                             .map(async (creator) => {
-                                // Assuming that creatorId is the key for finding user
-                                const user = await UserRepository.findUserById(creator.creatorId); // Get the user data
-                                const creatorCampaigns = await CampaignRepository.getCampaignsBySelectedCreatorsId(creator.creatorId, brandId); // Get the creator's campaigns
+                                const user = await UserRepository.findUserById(creator.creatorId);
+                                const creatorCampaigns = await CampaignRepository.getCampaignsBySelectedCreatorsId(
+                                    creator.creatorId,
+                                    brandId
+                                );
 
                                 return {
-                                    ...creator._doc, // Keep the original creator data
+                                    ...creator._doc,
                                     name: user.name,
                                     email: user.email,
                                     profileImage: user.profileImage || process.env.DOMAIN + "/default.png",
                                     coverImage: user.coverImage,
                                     bio: user.bio,
                                     tags: user.tags,
-                                    user_id: user._id,
+                                    user_id: user._id.toString(), // ensure string type for consistency
                                     campaigns: creatorCampaigns
                                 };
                             })
                     );
                 }
-                return []; // If no creators are selected, return an empty array
+                return [];
             })
         );
 
+        // Flatten and make partnerships unique by user_id
+        const partnershipsFlat = brandPartnershipsRaw.flat();
 
+        // Map to ensure uniqueness by user_id
+        const partnershipsMap = new Map();
+        partnershipsFlat.forEach(partner => {
+            if (!partnershipsMap.has(partner.user_id)) {
+                partnershipsMap.set(partner.user_id, partner);
+            } else {
+                // Optional: if you want to merge campaigns from duplicates
+                const existing = partnershipsMap.get(partner.user_id);
+                existing.campaigns = [...new Set([...existing.campaigns, ...partner.campaigns])];
+                partnershipsMap.set(partner.user_id, existing);
+            }
+        });
 
         const brandData = {
             ...brand.toObject(),
             campaigns: brandCampaigns,
             products: brandProducts,
-            partnerships: brandPartnerships.flat(),
+            partnerships: Array.from(partnershipsMap.values()),
         };
 
         return brandData;
     },
+
 
     async getCreatorById(creatorId) {
         const mongooseObjectId = mongoose.Types.ObjectId;

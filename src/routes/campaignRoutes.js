@@ -15,6 +15,9 @@ router.get('/related-cg', authenticate, CampaignController.getRelatedCampaigns);
 // Get related campaigns for each creator
 router.get('/related-cg/:creatorId', authenticate, CampaignController.getRelatedCampaignsForCreator);
 
+// Get related products by category ID 
+router.get('/related-products/:campaignId', authenticate, CampaignController.getRelatedProducts);
+
 // Get a single campaign by ID
 router.get('/:campaignId', authenticate, CampaignController.getCampaignById);
 
@@ -82,5 +85,8 @@ router.post(
     ]),
     CampaignController.schedulePost
 );
+
+// update amount of creator
+router.put('/:campaignId/creators/:creatorId/update-amount', authenticateBrand, CampaignController.updateCreatorAmount);
 
 export default router;

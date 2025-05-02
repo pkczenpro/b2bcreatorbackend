@@ -4,6 +4,11 @@ import User from "../models/user.js";
 import { shareLinkedIn } from "../utils/shareLinkedIn.js";
 import NotificationService from "./notificationService.js";
 import ScheduledPost from "../models/scheduledPost.js";
+import campaign from "../models/campaign.js";
+import product from "../models/product.js";
+import campaignRepository from "../repositories/campaignRepository.js";
+import user from "../models/user.js";
+import Invoice from "../models/invoice.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const CampaignService = {
@@ -37,13 +42,26 @@ const CampaignService = {
         });
     },
 
+    async getRelatedProducts(campaignId) {
+        const brandId = await campaignRepository.findCampaignById(campaignId);
+        const brand = await user.findById(brandId.brandId);
+
+        const brandName = brand.profileName;
+
+        const products = await product.find({ brandId: brandId.brandId });
+
+        return {
+            products: products,
+            brandName: brandName,
+        };
+    },
 
     /**
      * Get a single campaign by ID
      */
     async getCampaignById(campaignId, brandId) {
         const campaign = await Campaign.findById(campaignId)
-            .populate("brandId", "name email")
+            .populate("brandId", "profileName email")
             .populate("selectedCreators.creatorId", "name email profileImage reviews");
 
         const isOwner = campaign.brandId._id.toString() === brandId.toString();
@@ -350,11 +368,11 @@ const CampaignService = {
             message: "Post shared successfully",
         };
     },
+
     async acceptWork(campaignId, creatorId, postId) {
         const campaign = await Campaign.findById(campaignId);
         if (!campaign) throw new Error("Campaign not found");
 
-        // Find the creator in the selectedCreators list
         const selectedCreator = campaign.selectedCreators.find(
             (c) => c.creatorId.toString() === creatorId
         );
@@ -366,27 +384,51 @@ const CampaignService = {
         const linkedinId = user.linkedin.id;
 
         if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
+
         const post = selectedCreator.content.find((c) => c._id.toString() === postId);
-
         if (!post) throw new Error("Content not found");
-        const res = await shareLinkedIn(
-            post.files,
-            linkedinToken,
-            linkedinId,
-            post.content,
-            "IMAGE"
-        );
 
-        post.urnli = res.id;
-        post.url = "https://www.linkedin.com/embed/feed/update/" + res.id;
+        // const res = await shareLinkedIn(
+        //     post.files,
+        //     linkedinToken,
+        //     linkedinId,
+        //     post.content,
+        //     "IMAGE"
+        // );
+
+        // post.urnli = res?.id || null; 
+        // post.url = "https://www.linkedin.com/embed/feed/update/" + res?.id || null;
         post.type = "AI Text Creator";
-        // Update status
         selectedCreator.status = "done";
+
+        // Create invoice
+        const newInvoice = await Invoice.create({
+            brandId: campaign.brandId,
+            invoiceNumber: `INV-${Date.now()}-${campaignId}`,
+            dateIssued: new Date(),
+            creatorId: selectedCreator.creatorId,
+            items: [
+                {
+                    description: `Campaign: ${campaign.title}`,
+                    quantity: 1,
+                    price: selectedCreator.amount,
+                    total: selectedCreator.amount,
+                    files: post.files,
+                    content: post.content,
+                },
+            ],
+            totalAmount: selectedCreator.amount,
+            status: "pending",
+        });
+
+        // Attach invoice ID to the post
+        selectedCreator.invoiceId = newInvoice._id;
+
         await campaign.save();
         return campaign;
     },
-    async getLinkedInAnalytics(req, contentId) {
 
+    async getLinkedInAnalytics(req, contentId) {
         const user_id = req.user.id;
         const user = await User.findById(user_id);
         const accessToken = user?.linkedin?.access_token;
@@ -542,6 +584,31 @@ const CampaignService = {
             campaignId,
             { visibility: newStatus },
             { new: true }
+        );
+    },
+
+    async updateCreatorAmount(req, campaignId, creatorId, amount) {
+        const campaign = await Campaign.findById(campaignId);
+        if (!campaign) throw new Error("Campaign not found");
+
+        // Find the creator in the selectedCreators list
+        const selectedCreator = campaign.selectedCreators.find(
+            (c) => c.creatorId.toString() === creatorId
+        );
+
+        console.log(selectedCreator);
+
+        if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
+
+        selectedCreator.amount = Number(amount);
+        await campaign.save();
+
+        await NotificationService.sendNotification(
+            req.app.get('io'),
+            req.user.id,  // sender
+            creatorId, // receiver
+            `Your amount has been updated for the campaign: ` + campaign.title + " to " + amount + "$",
+            "/dashboard/campaigns-details/" + campaignId,
         );
     }
 };

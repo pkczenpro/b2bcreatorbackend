@@ -27,8 +27,10 @@ const campaignSchema = new mongoose.Schema(
                         files: [{ type: String }],
                         urnli: { type: String, required: false },
                         createdAt: { type: Date, default: Date.now },
+
                     },
                 ],
+                invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: "Invoice" },
                 createDate: { type: Date, default: Date.now },
                 updatedAt: { type: Date, default: Date.now },
             },
