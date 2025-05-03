@@ -4,6 +4,7 @@ import razorpay from '../utils/razorpayInstance.js';
 import crypto from 'crypto';
 import campaign from '../models/campaign.js';
 import user from '../models/user.js';
+import Invoice from '../models/invoice.js';
 
 router.post('/create-order', async (req, res) => {
     try {
@@ -31,7 +32,7 @@ router.post('/verify-payment', (req, res) => {
 
     if (generated_signature === razorpay_signature) {
         // Payment is successful, handle your business logic here
-        const invoice = 
+        // const invoice = Invoice.findById()
 
         res.json({ success: true });
     } else {
