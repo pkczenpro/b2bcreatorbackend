@@ -58,6 +58,14 @@ const invoiceSchema = new mongoose.Schema(
             enum: ["pending", "paid", "overdue"],
             default: "pending",
         },
+        razorpayPaymentId: {
+            type: String,
+            required: false,
+        },
+        razorpayOrderId: {
+            type: String,
+            required: false,
+        },
     },
     { timestamps: true }
 );

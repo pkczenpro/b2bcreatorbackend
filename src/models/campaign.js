@@ -7,10 +7,10 @@ const campaignSchema = new mongoose.Schema(
         description: { type: String, required: true },
         tags: [{ type: String }],
         contentType: [{ type: String }],
-        goalsAndDeliverables: { type: String, required: true },
+        goalsAndDeliverables: { type: String, required: false },
         status: { type: String, required: true },
-        startDate: { type: Date, required: true },
-        endDate: { type: Date, required: true },
+        startDate: { type: Date, required: false },
+        endDate: { type: Date, required: false },
         budget: { type: Number, required: true },
         coverImage: { type: String, required: false },
         selectedCreators: [

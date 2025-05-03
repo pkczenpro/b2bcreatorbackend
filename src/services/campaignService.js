@@ -62,7 +62,8 @@ const CampaignService = {
     async getCampaignById(campaignId, brandId) {
         const campaign = await Campaign.findById(campaignId)
             .populate("brandId", "profileName email")
-            .populate("selectedCreators.creatorId", "name email profileImage reviews");
+            .populate("selectedCreators.creatorId", "name email profileImage reviews")
+            .populate("selectedCreators.invoiceId", "invoiceNumber dateIssued totalAmount status");
 
         const isOwner = campaign.brandId._id.toString() === brandId.toString();
         const isApplied = campaign.selectedCreators.some(
@@ -77,6 +78,7 @@ const CampaignService = {
             const filteredReviews = (creatorObj.creatorId?.reviews || []).filter(
                 (review) => review.campaignId.toString() === campaignId.toString()
             );
+
 
             return {
                 ...creatorObj._doc,
@@ -363,7 +365,6 @@ const CampaignService = {
             );
         }
 
-
         return {
             message: "Post shared successfully",
         };
@@ -396,15 +397,16 @@ const CampaignService = {
             "IMAGE"
         );
 
-        post.urnli = res?.id || null; 
+        post.urnli = res?.id || null;
         post.url = "https://www.linkedin.com/embed/feed/update/" + res?.id || null;
         post.type = "AI Text Creator";
         selectedCreator.status = "done";
 
         // Create invoice
+        const randomSuffix = Math.floor(1000 + Math.random() * 9000);
         const newInvoice = await Invoice.create({
             brandId: campaign.brandId,
-            invoiceNumber: `INV-${Date.now()}-${campaignId}`,
+            invoiceNumber: `INV-${Date.now()}-${randomSuffix}`,
             dateIssued: new Date(),
             creatorId: selectedCreator.creatorId,
             items: [
@@ -423,7 +425,7 @@ const CampaignService = {
 
         // Attach invoice ID to the post
         selectedCreator.invoiceId = newInvoice._id;
-
+        
         await campaign.save();
         return campaign;
     },

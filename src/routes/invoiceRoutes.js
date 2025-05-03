@@ -17,13 +17,13 @@ router.post('/create-order', async (req, res) => {
         const order = await razorpay.orders.create(options);
         res.json(order);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.error.description });
     }
 });
 
 
-router.post('/verify-payment', (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, campaignId, userId } = req.body;
+router.post('/verify-payment', async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, invoiceId } = req.body;
 
     const generated_signature = crypto
         .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
@@ -31,14 +31,26 @@ router.post('/verify-payment', (req, res) => {
         .digest('hex');
 
     if (generated_signature === razorpay_signature) {
-        // Payment is successful, handle your business logic here
-        // const invoice = Invoice.findById()
+        try {
+            const invoice = await Invoice.findById(invoiceId);
+            if (!invoice) {
+                return res.status(404).json({ success: false, message: 'Invoice not found' });
+            }
+            invoice.status = 'paid';
+            invoice.razorpayPaymentId = razorpay_payment_id;
+            invoice.razorpayOrderId = razorpay_order_id;
+            await invoice.save();
 
-        res.json({ success: true });
+            res.json({ success: true });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: 'Server error' });
+        }
     } else {
         res.status(400).json({ success: false, message: 'Invalid signature' });
     }
 });
+
 
 router.get('/invoice-details/:campaignId/:userEmail', async (req, res) => {
     const { campaignId, userEmail } = req.params;

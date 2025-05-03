@@ -175,6 +175,11 @@ const UserController = {
                 };
             });
 
+            //randomize the data
+            data.sort(() => Math.random() - 0.5);
+            //limit the data to 10
+        
+
             res.json(data);
         } catch (error) {
             console.log(error)
