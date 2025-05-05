@@ -16,7 +16,6 @@ const CampaignService = {
      * Create a new campaign
      */
     async createCampaign(campaignData) {
-
         return await Campaign.create(campaignData);
     },
 
@@ -163,6 +162,22 @@ const CampaignService = {
             `You have been added to a campaign: ` + campaign.title,
             "/dashboard/campaigns-details/" + campaignId,
         );
+
+        // add to calendar
+        await User.findByIdAndUpdate(creatorId, {
+            $push: {
+                calendar: {
+                    title: `You have been added to a campaign: ` + campaign.title,
+                    date: new Date(),
+                    color: "#0078d4",
+                    type: "campaign",
+                    status: "pending",
+                    campaignId,
+                }
+            },
+        });
+
+
 
         return campaign;
     },
@@ -389,16 +404,16 @@ const CampaignService = {
         const post = selectedCreator.content.find((c) => c._id.toString() === postId);
         if (!post) throw new Error("Content not found");
 
-        const res = await shareLinkedIn(
-            post.files,
-            linkedinToken,
-            linkedinId,
-            post.content,
-            "IMAGE"
-        );
+        // const res = await shareLinkedIn(
+        //     post.files,
+        //     linkedinToken,
+        //     linkedinId,
+        //     post.content,
+        //     "IMAGE"
+        // );
 
-        post.urnli = res?.id || null;
-        post.url = "https://www.linkedin.com/embed/feed/update/" + res?.id || null;
+        // post.urnli = res?.id || null;
+        // post.url = "https://www.linkedin.com/embed/feed/update/" + res?.id || null;
         post.type = "AI Text Creator";
         selectedCreator.status = "done";
 
@@ -425,7 +440,25 @@ const CampaignService = {
 
         // Attach invoice ID to the post
         selectedCreator.invoiceId = newInvoice._id;
-        
+
+        const userCalendar = await User.findByIdAndUpdate(
+            creatorId,
+            {
+                $push: {
+                    calendar: {
+                        title: `You have been paid for the campaign: ` + campaign.title,
+                        date: new Date(),
+                        color: "#0078d4",
+                        type: "Campaign",
+                        status: "pending",
+                        invoiceId: newInvoice._id,
+                    }
+                }
+            },
+            { new: true } // return the updated document
+        );
+
+
         await campaign.save();
         return campaign;
     },

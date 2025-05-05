@@ -9,8 +9,8 @@ import Invoice from '../models/invoice.js';
 router.post('/create-order', async (req, res) => {
     try {
         const options = {
-            amount: req.body.amount * 100,
-            currency: 'INR',
+            amount: req.body.amount,
+            currency: 'USD',
             receipt: 'order_rcptid_11',
         };
 

@@ -4,7 +4,7 @@ import CampaignService from "../services/campaignService.js";
 import NotificationService from "../services/notificationService.js";
 import MessageService from "../services/messageService.js";
 import generatePost from "../services/openAiServices.js";
-
+import user from "../models/user.js";
 
 
 export const createCampaign = async (req, res) => {
@@ -13,6 +13,31 @@ export const createCampaign = async (req, res) => {
             ...req.body,
             brandId: req.user.id
         });
+
+        // calendar for startDate
+        await UserRepository.updateUser(req.user.id, {
+            $push: {
+                calendar: {
+                    title: `Launch of ${newCampaign.title}`,
+                    date: newCampaign.startDate,
+                    description: newCampaign.description,
+                    campaignId: newCampaign._id,
+                },
+            },
+        });
+
+        // calendar for endDate
+        await UserRepository.updateUser(req.user.id, {
+            $push: {
+                calendar: {
+                    title: `End of ${newCampaign.title}`,
+                    date: newCampaign.endDate,
+                    description: newCampaign.description,
+                    campaignId: newCampaign._id,
+                },
+            },
+        });
+
         res.status(201).json(newCampaign);
     } catch (error) {
         res.status(400).json({ error: error.message });
