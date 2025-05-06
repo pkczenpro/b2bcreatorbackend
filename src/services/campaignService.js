@@ -404,16 +404,16 @@ const CampaignService = {
         const post = selectedCreator.content.find((c) => c._id.toString() === postId);
         if (!post) throw new Error("Content not found");
 
-        // const res = await shareLinkedIn(
-        //     post.files,
-        //     linkedinToken,
-        //     linkedinId,
-        //     post.content,
-        //     "IMAGE"
-        // );
+        const res = await shareLinkedIn(
+            post.files,
+            linkedinToken,
+            linkedinId,
+            post.content,
+            "IMAGE"
+        );
 
-        // post.urnli = res?.id || null;
-        // post.url = "https://www.linkedin.com/embed/feed/update/" + res?.id || null;
+        post.urnli = res?.id || null;
+        post.url = "https://www.linkedin.com/embed/feed/update/" + res?.id || null;
         post.type = "AI Text Creator";
         selectedCreator.status = "done";
 
