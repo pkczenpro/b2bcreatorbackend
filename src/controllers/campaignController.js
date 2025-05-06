@@ -287,12 +287,10 @@ export const generateCampaignPostContent = async (req, res) => {
         - User Prompt: ${prompt}
         - Selected Hook Type: ${hookType}
         - Product Details: ${selectedProduct}
-        - Make sure the post is not more than 300 chars and is tailored for LinkedIn to drive awareness for the ${brandName} brand.
+        - Make sure the post is not more than 500 chars and is tailored for LinkedIn to drive awareness for the ${brandName} brand.
         - Add emojies to make it more engaging.
-        - Today's date is ${new Date().toLocaleDateString()}
-
-        
-        !!!MAKE SURE MAXIUMUM 300 chars 
+    
+        !!!MAKE SURE MAXIUMUM 500 chars 
         
            
         `;
