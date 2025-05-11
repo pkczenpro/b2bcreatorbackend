@@ -1,15 +1,30 @@
-import "dotenv/config";
-import { ChatOpenAI } from "@langchain/openai";
+import dotenv from "dotenv";
+import { ChatTogetherAI } from "@langchain/community/chat_models/togetherai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { ChatOpenAI } from "@langchain/openai";
 
-const llm = new ChatOpenAI({
-  openAIApiKey: process.env.OPENAI_API_KEY,
-  modelName: "gpt-4",
-  temperature: 0.7,
-});
+dotenv.config();
 
-const generatePost = async (prompt) => {
+const generatePost = async (prompt, modelName = "qwen/qwen1.5-72b-chat") => {
+  console.log("Model Name:", modelName);
+
   try {
+    let llm;
+
+    if (modelName === "openai") {
+      llm = new ChatOpenAI({
+        openAIApiKey: process.env.OPENAI_API_KEY,
+        modelName: "gpt-4", // You can make this dynamic too if needed
+        temperature: 0.7,
+      });
+    } else {
+      llm = new ChatTogetherAI({
+        togetherApiKey: process.env.TOGETHER_AI_API_KEY,
+        modelName, // Use the Together model
+        temperature: 0.7,
+      });
+    }
+
     const response = await llm.invoke([
       new SystemMessage(
         `You are a professional content strategist specialized in crafting engaging, authentic, and insightful LinkedIn contents.
@@ -22,7 +37,7 @@ Avoid sounding too robotic or generic — aim for a personal, real voice that re
 
     return response.content.trim();
   } catch (error) {
-    console.error("Langchain OpenAI Error:", error);
+    console.error("LLM Error:", error);
     throw new Error("Failed to generate content");
   }
 };

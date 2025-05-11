@@ -116,6 +116,16 @@ export const removeCreator = async (req, res) => {
             null
         );
 
+        await NotificationService.sendContentEmail({
+            userId: req.params.creatorId,
+            params: {
+                title: `You've been removed from the "${campaign.title}" campaign`,
+                content: "If you have any questions, feel free to reach out!",
+                button: "Contact us",
+                link: null
+            }
+        });
+
         res.status(200).json(campaign);
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -133,6 +143,16 @@ export const selectCreator = async (req, res) => {
             `🎉 Great news! You have been selected for the campaign "${campaign.title}"`,
             "/dashboard/campaigns-details/" + req.params.campaignId,
         );
+
+        await NotificationService.sendContentEmail({
+            userId: req.body.creatorId,
+            params: {
+                title: `🎉 Great news!`,
+                content: `You have been selected for the campaign "${campaign.title}"`,
+                button: "View Campaign",
+                link: "/dashboard/campaigns-details/" + req.params.campaignId
+            }
+        });
 
         res.status(200).json(campaign);
     } catch (error) {
@@ -230,6 +250,19 @@ export const acceptCreator = async (req, res) => {
             `🎉 Great news! You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
         );
 
+        // send email to creator
+        await NotificationService.sendContentEmail(
+            {
+                userId: req.params.creatorId,
+                params: {
+                    title: `🎉 Great news!`,
+                    content: `You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
+                    button: "View Campaign",
+                    link: "/dashboard/campaigns-details/" + req.params.campaignId
+                }
+            }
+        );
+
         // send using i
 
         res.status(200).json(campaign);
@@ -270,6 +303,18 @@ export const acceptWork = async (req, res) => {
             `🎉 Great news! Your work for the "${campaign.title}" campaign has been accepted by the brand and shared on LinkedIn!`,
         );
 
+        await NotificationService.sendContentEmail(
+            {
+                userId: req.params.creatorId,
+                params: {
+                    title: `🎉 Great news!`,
+                    content: `Your work for the campaign "${campaign.title}" has been accepted`,
+                    button: "View Campaign",
+                    link: "/dashboard/campaigns-details/" + req.params.campaignId
+                }
+            }
+        );
+
         res.status(200).json(campaign);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -278,7 +323,7 @@ export const acceptWork = async (req, res) => {
 
 export const generateCampaignPostContent = async (req, res) => {
     try {
-        const { prompt, selectedCampaign, hookType, selectedProduct, brandName } = req.body;
+        const { prompt, selectedCampaign, hookType, selectedProduct, brandName, modelName } = req.body;
 
         // const brandName = brand.name;
 
@@ -295,7 +340,7 @@ export const generateCampaignPostContent = async (req, res) => {
            
         `;
 
-        const post = await generatePost(campaignPrompt);
+        const post = await generatePost(campaignPrompt, modelName);
 
         res.status(200).json({ post });
     } catch (error) {
@@ -324,7 +369,7 @@ export const getCampaignAnalytics = async (req, res) => {
     }
 }
 
-const generateSection = async (label, input, today, defaultText) => {
+const generateSection = async (label, input, today, defaultText, modelName) => {
     const prompt = `
 You are an AI assistant generating only the "${label}" text for a LinkedIn carousel.
 
@@ -348,14 +393,14 @@ INPUT:
 - input name: ${defaultText}
 `
 
-    const rawResponse = await generatePost(prompt);
+    const rawResponse = await generatePost(prompt, modelName);
 
     // Clean the response in case there are extra quotes or whitespace
     return rawResponse.trim().replace(/^"(.*)"$/, '$1');
 };
 
 export const generateCarouselMakerContent = async (req, res) => {
-    const { aiPrompt } = req.body;
+    const { aiPrompt, modelName } = req.body;
 
     if (!aiPrompt) {
         return res.status(400).json({ error: "Missing required 'aiPrompt'" });
@@ -365,10 +410,10 @@ export const generateCarouselMakerContent = async (req, res) => {
         const today = new Date().toLocaleDateString();
 
         const [topic, title, tagline, button] = await Promise.all([
-            generateSection("topic", aiPrompt, today, "Create a short, impactful topic that sets the stage for the carousel. Maximum 10 characters. Make it intriguing and relevant to the content."),
-            generateSection("title", aiPrompt, today, "Create an attention-grabbing hook that makes people stop scrolling. Use power words, questions, or surprising facts. Maximum 40 characters. Include relevant emojis."),
-            generateSection("tagline", aiPrompt, today, "Write a compelling tagline that builds on the hook and creates curiosity. Use emotional triggers and make it personal. Maximum 20 characters."),
-            generateSection("button", aiPrompt, today, "Create a clear, action-oriented button text that encourages engagement. Maximum 5 characters. Use words like 'Read', 'Learn', 'See', 'Try'."),
+            generateSection("topic", aiPrompt, today, "Create a short, impactful topic that sets the stage for the carousel. Maximum 10 characters. Make it intriguing and relevant to the content.", modelName),
+            generateSection("title", aiPrompt, today, "Create an attention-grabbing hook that makes people stop scrolling. Use power words, questions, or surprising facts. Maximum 40 characters. Include relevant emojis.", modelName),
+            generateSection("tagline", aiPrompt, today, "Write a compelling tagline that builds on the hook and creates curiosity. Use emotional triggers and make it personal. Maximum 20 characters.", modelName),
+            generateSection("button", aiPrompt, today, "Create a clear, action-oriented button text that encourages engagement. Maximum 5 characters. Use words like 'Read', 'Learn', 'See', 'Try'.", modelName),
         ]);
 
         res.status(200).json({

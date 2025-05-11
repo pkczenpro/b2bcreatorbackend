@@ -178,7 +178,7 @@ const UserController = {
             //randomize the data
             data.sort(() => Math.random() - 0.5);
             //limit the data to 10
-        
+
 
             res.json(data);
         } catch (error) {
@@ -263,6 +263,16 @@ const UserController = {
                 receiverId: req.params.brandId,
                 message: `🙌 You’ve got a new follower — ${response.profileName}!`,
                 link: null,
+            });
+
+            await NotificationService.sendContentEmail({
+                userId: req.params.brandId,
+                params: {
+                    title: "New Follower",
+                    content: `🙌 You’ve got a new follower — ${response.profileName}!`,
+                    link: null,
+                    button: null,
+                },
             });
 
             res.json(response);

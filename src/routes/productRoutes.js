@@ -11,7 +11,8 @@ router.post(
     authenticateBrand,
     upload.fields([
         { name: "productLogo", maxCount: 1 },
-        { name: "productImages", maxCount: 5 } // Allow up to 5 images
+        { name: "productImages", maxCount: 5 }, // Allow up to 5 images
+        { name: "resources", maxCount: 5 } // Allow up to 5 resources
     ]),
     productController.createProduct
 );
@@ -27,7 +28,7 @@ router.put(
     ]),
     productController.updateProduct
 );
-router.delete("/:id", productController.deleteProduct);
+router.delete("/:id", authenticateBrand, productController.deleteProduct);
 router.post("/rate/:id", authenticate, productController.rateProduct);
 
 

@@ -131,6 +131,16 @@ const CampaignService = {
             "/dashboard/campaigns-details/" + campaignId,
         );
 
+        await NotificationService.sendContentEmail({
+            userId: campaign.brandId._id,
+            params: {
+                title: "New Campaign Application",
+                content: `A new creator has applied to your campaign: ${campaign.title}`,
+                link: "/dashboard/campaigns-details/" + campaignId,
+                button: "View Campaign",
+            },
+        })
+
         return campaign;
     },
 
@@ -176,6 +186,16 @@ const CampaignService = {
                 }
             },
         });
+
+        await NotificationService.sendContentEmail({
+            userId: creatorId,
+            params: {
+                title: "New Campaign Invitation",
+                content: `You have been added to a campaign: ${campaign.title}`,
+                link: "/dashboard/campaigns-details/" + campaignId,
+                button: "View Campaign",
+            },
+        })
 
 
 
@@ -358,6 +378,15 @@ const CampaignService = {
                 "/dashboard/campaigns-details/" + campaignId,
             );
 
+            await NotificationService.sendContentEmail({
+                userId: req.params.creatorId,
+                params: {
+                    title: "Campaign Content Submission",
+                    content: `You have submitted your work for the campaign "${campaign.title}"`,
+                    link: "/dashboard/campaigns-details/" + campaignId,
+                    button: "View Campaign",
+                },
+            })
             // Send notification to the brand
             await NotificationService.sendNotification(
                 req.app.get('io'),
@@ -366,6 +395,17 @@ const CampaignService = {
                 `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
                 "/dashboard/campaigns-details/" + campaignId,
             );
+            await NotificationService.sendContentEmail({
+                userId: campaign.brandId._id,
+                params: {
+                    title: "New Campaign Content Submission",
+                    content: `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
+                    link: "/dashboard/campaigns-details/" + campaignId,
+                    button: "View Campaign",
+                },
+            })
+
+
         }
 
         if (isIndependent) {
@@ -645,6 +685,16 @@ const CampaignService = {
             `Your amount has been updated for the campaign: ` + campaign.title + " to " + amount + "$",
             "/dashboard/campaigns-details/" + campaignId,
         );
+
+        await NotificationService.sendContentEmail({
+            userId: creatorId,
+            params: {
+                title: "Campaign Amount Update",
+                content: `Your amount has been updated for the campaign: ${campaign.title} to ${amount}$`,
+                link: "/dashboard/campaigns-details/" + campaignId,
+                button: "View Campaign",
+            },
+        })
     }
 };
 

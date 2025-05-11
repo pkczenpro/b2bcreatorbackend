@@ -1,5 +1,7 @@
 import product from "../models/product.js";
+import UserRepository from "../repositories/userRepository.js";
 import productService from "../services/productService.js";
+import userService from "../services/userService.js";
 
 const productController = {
     createProduct: async (req, res) => {
@@ -90,13 +92,42 @@ const productController = {
 
     deleteProduct: async (req, res) => {
         try {
-            const product = await productService.deleteProduct(req.params.id);
-            if (!product) return res.status(404).json({ message: "Product not found" });
-            res.json({ message: "Product deleted successfully" });
+            const user = req.user;
+
+            if (!user) {
+                return res.status(401).json({ message: "Unauthorized" });
+            }
+
+            if (user.userType !== "brand") {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+
+            const userData = await UserRepository.findUserById(user.id);
+            if (!userData) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            const brandId = userData._id;
+
+            const productData = await productService.getProductById(req.params.id);
+            if (!productData) {
+                return res.status(404).json({ message: "Product not found" });
+            }
+
+            if (productData.brandId.toString() !== brandId?.toString()) {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+
+            await productService.deleteProduct(req.params.id);
+
+            return res.json({ message: "Product deleted successfully" });
+
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            console.error('Error deleting product:', error);
+            return res.status(500).json({ message: "Internal Server Error" });
         }
     },
+
 
     rateProduct: async (req, res) => {
         try {
