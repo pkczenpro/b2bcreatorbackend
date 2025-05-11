@@ -246,7 +246,7 @@ const UserController = {
 
     async getBrandById(req, res) {
         try {
-            const brand = await UserService.getBrandById(req.params.id);
+            const brand = await UserService.getBrandById(req?.params?.id);
             res.json(brand);
         } catch (error) {
             res.status(400).json({ error: error.message });

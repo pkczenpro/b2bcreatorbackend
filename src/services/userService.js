@@ -492,48 +492,49 @@ const UserService = {
 
         const brandPartnershipsRaw = await Promise.all(
             brandCampaigns.map(async (campaign) => {
-                if (campaign.selectedCreators.length > 0) {
-                    return await Promise.all(
-                        campaign.selectedCreators
-                            .filter((creator) => creator.status === "done")
-                            .map(async (creator) => {
-                                const user = await UserRepository.findUserById(creator.creatorId);
-                                const creatorCampaigns = await CampaignRepository.getCampaignsBySelectedCreatorsId(
-                                    creator.creatorId,
-                                    brandId
-                                );
+                if (!campaign.selectedCreators || campaign.selectedCreators.length === 0) return [];
 
-                                return {
-                                    ...creator._doc,
-                                    name: user.name,
-                                    email: user.email,
-                                    profileImage: user.profileImage || process.env.DOMAIN + "/default.png",
-                                    coverImage: user.coverImage,
-                                    bio: user.bio,
-                                    tags: user.tags,
-                                    user_id: user._id.toString(), // ensure string type for consistency
-                                    campaigns: creatorCampaigns
-                                };
-                            })
-                    );
-                }
-                return [];
+                const doneCreators = campaign.selectedCreators.filter(c => c.status === "done");
+
+                const enrichedCreators = await Promise.all(
+                    doneCreators.map(async (creator) => {
+                        const user = await UserRepository.findUserById(creator.creatorId);
+                        if (!user) return null;
+
+                        const creatorCampaigns = await CampaignRepository.getCampaignsBySelectedCreatorsId(
+                            creator.creatorId,
+                            brandId
+                        );
+
+                        return {
+                            ...creator,
+                            name: user.name,
+                            email: user.email,
+                            profileImage: user.profileImage || process.env.DOMAIN + "/default.png",
+                            coverImage: user.coverImage,
+                            bio: user.bio,
+                            tags: user.tags,
+                            user_id: user._id.toString(),
+                            campaigns: creatorCampaigns
+                        };
+                    })
+                );
+
+                // Filter out any null results (where user not found)
+                return enrichedCreators.filter(Boolean);
             })
         );
 
-        // Flatten and make partnerships unique by user_id
+        // Flatten and deduplicate by user_id
         const partnershipsFlat = brandPartnershipsRaw.flat();
-
-        // Map to ensure uniqueness by user_id
         const partnershipsMap = new Map();
+
         partnershipsFlat.forEach(partner => {
             if (!partnershipsMap.has(partner.user_id)) {
                 partnershipsMap.set(partner.user_id, partner);
             } else {
-                // Optional: if you want to merge campaigns from duplicates
                 const existing = partnershipsMap.get(partner.user_id);
                 existing.campaigns = [...new Set([...existing.campaigns, ...partner.campaigns])];
-                partnershipsMap.set(partner.user_id, existing);
             }
         });
 
