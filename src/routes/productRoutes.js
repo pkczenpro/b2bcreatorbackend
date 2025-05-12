@@ -24,7 +24,8 @@ router.put(
     authenticateBrand,
     upload.fields([
         { name: "productLogo", maxCount: 1 },
-        { name: "productImages", maxCount: 5 }
+        { name: "productImages", maxCount: 5 }, // Allow up to 5 images
+        { name: "resources", maxCount: 5 } // Allow up to 5 resources
     ]),
     productController.updateProduct
 );

@@ -82,10 +82,49 @@ const productController = {
 
     updateProduct: async (req, res) => {
         try {
-            const product = await productService.updateProduct(req.params.id, req.body);
+            const {
+                productName,
+                publicVisibility,
+                productDescription,
+                productLink,
+                loomVideoLink,
+                g2Link,
+                capterraLink,
+                additionalDetails,
+                productHunt,
+            } = req.body;
+
+            const productLogo = req.files?.productLogo ? "/uploads/" + req.files.productLogo[0].filename : undefined;
+            const productImages = req.files?.productImages ? req.files.productImages.map(file =>
+                "/uploads/" + file.filename
+            ) : undefined;
+
+            const productResources = req.files?.resources ? req.files.resources.map(file =>
+                "/uploads/" + file.filename
+            ) : undefined;
+
+            const updatedData = {
+                productName,
+                publicVisibility,
+                productDescription,
+                productLink,
+                loomVideoLink,
+                g2Link,
+                capterraLink,
+                additionalDetails,
+                productHunt,
+            };
+
+            if (productLogo) updatedData.productLogo = productLogo;
+            if (productImages) updatedData.productImages = productImages;
+            if (productResources) updatedData.resources = productResources;
+
+            const product = await productService.updateProduct(req.params.id, updatedData);
             if (!product) return res.status(404).json({ message: "Product not found" });
+
             res.json(product);
         } catch (error) {
+            console.log(error);
             res.status(500).json({ message: error.message });
         }
     },
