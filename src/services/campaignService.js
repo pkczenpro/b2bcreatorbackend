@@ -80,16 +80,16 @@ const CampaignService = {
 
 
             return {
-                ...creatorObj._doc,
+                ...creatorObj?._doc,
                 creatorId: {
-                    ...creatorObj.creatorId._doc,
+                    ...creatorObj?.creatorId._doc,
                     reviews: filteredReviews,
                 },
             };
         });
 
         return {
-            ...campaign._doc,
+            ...campaign?._doc,
             isOwner,
             isApplied,
             status: userCampaignStatus,

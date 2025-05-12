@@ -11,27 +11,18 @@ const NotificationService = {
             message,
             link,
         });
-
         const populatedNotification = await Notification.findById(notification._id)
-            .populate("sender", "name email") // Populate sender details
-
+            .populate("sender", "name email")
         io.to(receiverId.toString()).emit('newNotification', populatedNotification);
     },
 
     async sendContentEmail(data) {
-        console.log("Sending email to user with ID:", data);
-        console.log("Email parameters:", data.params);
-
-
         const user = await UserRepository.findUserById(data.userId);
-
         if (!user || !user.email) {
             throw new Error("User not found");
         }
-
         const email = user?.email;
         const params = data?.params;
-
         try {
             const res = await sendEmail({
                 to: [{ email }],
@@ -46,7 +37,6 @@ const NotificationService = {
             });
             return res;
         } catch (error) {
-            // If sending the email fails, don't create the user
             throw new Error("Email sending failed: " + error.message);
         }
     }
