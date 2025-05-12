@@ -95,6 +95,9 @@ const UserService = {
     async loginUser(userType, email, password) {
         const user = await UserRepository.findUserByEmail(email);
         if (!user) throw new Error("We couldn't find an account with that email. Please check and try again.");
+        if (!user.password) {
+            throw new Error("It looks like you signed up using LinkedIn or Google. Please continue by clicking the LinkedIn or Google button to log in.");
+        }
 
         if (userType !== user.userType) throw new Error("Oops! The email or password is incorrect. Please try again.");
         // Compare password
