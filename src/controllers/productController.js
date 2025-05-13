@@ -16,39 +16,58 @@ const productController = {
                 capterraLink,
                 additionalDetails,
                 productHunt,
-                resources,
             } = req.body;
 
-            const productLogo = req.files?.productLogo ? req.files.productLogo[0].filename : null;
-            const productImages = req.files?.productImages ? req.files.productImages.map(file =>
-                "/uploads/" + file.filename
-            ) : [];
+            // Validate required fields
+            if (!productName) {
+                return res.status(400).json({ message: "Product name is required." });
+            }
 
-            const productResources = req.files?.resources ? req.files.resources.map(file =>
-                "/uploads/" + file.filename
-            ) : [];
+            if (typeof publicVisibility === "undefined") {
+                return res.status(400).json({ message: "Public visibility is required." });
+            }
+
+            if (!req.user?.id) {
+                return res.status(401).json({ message: "Unauthorized. User ID not found." });
+            }
+
+            // Handle files safely
+            const productLogoFile = req.files?.productLogo?.[0]?.filename;
+            const productLogo = productLogoFile ? "/uploads/" + productLogoFile : null;
+
+            const productImages = Array.isArray(req.files?.productImages)
+                ? req.files.productImages.map(file => "/uploads/" + file.filename)
+                : [];
+
+            const productResources = Array.isArray(req.files?.resources)
+                ? req.files.resources.map(file => "/uploads/" + file.filename)
+                : [];
 
             const newProduct = new product({
-                brandId: req.user.id, // Assuming authentication middleware sets `req.user`
+                brandId: req.user.id,
                 productName,
-                productLogo: "/uploads/" + productLogo,
+                productLogo,
                 publicVisibility,
-                productDescription,
+                productDescription: productDescription || "",
                 productImages,
-                productLink,
-                loomVideoLink,
-                g2Link,
-                capterraLink,
-                additionalDetails,
-                productHunt,
+                productLink: productLink || "",
+                loomVideoLink: loomVideoLink || "",
+                g2Link: g2Link || "",
+                capterraLink: capterraLink || "",
+                additionalDetails: additionalDetails || "",
+                productHunt: productHunt || "",
                 resources: productResources,
             });
 
             await newProduct.save();
-            res.status(201).json({ message: "Product created successfully!", product: newProduct });
+            return res.status(201).json({ message: "Product created successfully!", product: newProduct });
+
         } catch (error) {
-            console.log(error)
-            res.status(500).json({ error: error.message });
+            console.error("Error creating product:", error);
+            return res.status(500).json({
+                message: "An error occurred while creating the product.",
+                error: error.message || error
+            });
         }
     },
 
@@ -94,40 +113,64 @@ const productController = {
                 productHunt,
             } = req.body;
 
-            const productLogo = req.files?.productLogo ? "/uploads/" + req.files.productLogo[0].filename : undefined;
-            const productImages = req.files?.productImages ? req.files.productImages.map(file =>
-                "/uploads/" + file.filename
-            ) : undefined;
+            // Basic null/undefined checks on required fields
+            if (!productName) {
+                return res.status(400).json({ message: "Product name is required." });
+            }
 
-            const productResources = req.files?.resources ? req.files.resources.map(file =>
-                "/uploads/" + file.filename
-            ) : undefined;
+            if (typeof publicVisibility === "undefined") {
+                return res.status(400).json({ message: "Public visibility status is required." });
+            }
 
+            // Handle files safely
+            const productLogo = req.files?.productLogo?.[0]?.filename
+                ? "/uploads/" + req.files.productLogo[0].filename
+                : undefined;
+
+            const productImages = Array.isArray(req.files?.productImages)
+                ? req.files.productImages.map(file => "/uploads/" + file.filename)
+                : undefined;
+
+            const productResources = Array.isArray(req.files?.resources)
+                ? req.files.resources.map(file => "/uploads/" + file.filename)
+                : undefined;
+
+            // Prepare the updated data object
             const updatedData = {
                 productName,
                 publicVisibility,
-                productDescription,
-                productLink,
-                loomVideoLink,
-                g2Link,
-                capterraLink,
-                additionalDetails,
-                productHunt,
+                productDescription: productDescription || "",
+                productLink: productLink || "",
+                loomVideoLink: loomVideoLink || "",
+                g2Link: g2Link || "",
+                capterraLink: capterraLink || "",
+                additionalDetails: additionalDetails || "",
+                productHunt: productHunt || "",
             };
 
             if (productLogo) updatedData.productLogo = productLogo;
             if (productImages) updatedData.productImages = productImages;
             if (productResources) updatedData.resources = productResources;
 
-            const product = await productService.updateProduct(req.params.id, updatedData);
-            if (!product) return res.status(404).json({ message: "Product not found" });
+            // Check if the product ID is valid
+            if (!req.params.id) {
+                return res.status(400).json({ message: "Product ID is missing in request parameters." });
+            }
 
-            res.json(product);
+            const product = await productService.updateProduct(req.params.id, updatedData);
+
+            if (!product) {
+                return res.status(404).json({ message: "Product not found or could not be updated." });
+            }
+
+            return res.json(product);
+
         } catch (error) {
-            console.log(error);
-            res.status(500).json({ message: error.message });
+            console.error("Error updating product:", error);
+            return res.status(500).json({ message: "An unexpected error occurred while updating the product.", error: error.message || error });
         }
     },
+
 
     deleteProduct: async (req, res) => {
         try {
