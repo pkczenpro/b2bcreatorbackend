@@ -64,38 +64,51 @@ const CampaignService = {
             .populate("selectedCreators.creatorId", "name email profileImage reviews")
             .populate("selectedCreators.invoiceId", "invoiceNumber dateIssued totalAmount status");
 
-        const isOwner = campaign.brandId._id.toString() === brandId.toString();
-        const isApplied = campaign.selectedCreators.some(
-            (c) => c.creatorId?._id?.toString() === brandId?.toString()
-        );
-        const userCampaignStatus = campaign.selectedCreators.find(
-            (c) => c.creatorId?._id?.toString() === brandId?.toString()
-        )?.status;
+        if (!campaign || !campaign.brandId) {
+            return null; // Or throw an error if preferred
+        }
 
-        // 🔍 Filter each creator's reviews to only include ones for this campaign
-        const selectedCreatorsWithFilteredReviews = campaign.selectedCreators.map((creatorObj) => {
-            const filteredReviews = (creatorObj.creatorId?.reviews || []).filter(
-                (review) => review.campaignId.toString() === campaignId.toString()
+        const isOwner = campaign.brandId?._id?.toString() === brandId?.toString();
+
+        const isApplied = Array.isArray(campaign.selectedCreators) &&
+            campaign.selectedCreators.some(
+                (c) => c.creatorId?._id?.toString() === brandId?.toString()
             );
 
+        const userCampaignStatus = Array.isArray(campaign.selectedCreators)
+            ? campaign.selectedCreators.find(
+                (c) => c.creatorId?._id?.toString() === brandId?.toString()
+            )?.status
+            : null;
 
-            return {
-                ...creatorObj?._doc,
-                creatorId: {
-                    ...creatorObj?.creatorId._doc,
-                    reviews: filteredReviews,
-                },
-            };
-        });
+        const selectedCreatorsWithFilteredReviews = Array.isArray(campaign.selectedCreators)
+            ? campaign.selectedCreators.map((creatorObj) => {
+                const filteredReviews = Array.isArray(creatorObj.creatorId?.reviews)
+                    ? creatorObj.creatorId.reviews.filter(
+                        (review) =>
+                            review?.campaignId?.toString?.() === campaignId?.toString()
+                    )
+                    : [];
+
+                return {
+                    ...creatorObj?._doc,
+                    creatorId: {
+                        ...(creatorObj?.creatorId?._doc || {}),
+                        reviews: filteredReviews,
+                    },
+                };
+            })
+            : [];
 
         return {
-            ...campaign?._doc,
+            ...(campaign?._doc || {}),
             isOwner,
             isApplied,
             status: userCampaignStatus,
             selectedCreators: selectedCreatorsWithFilteredReviews,
         };
     }
+
     ,
 
     /**
