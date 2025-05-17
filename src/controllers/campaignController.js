@@ -5,6 +5,7 @@ import NotificationService from "../services/notificationService.js";
 import MessageService from "../services/messageService.js";
 import generatePost from "../services/openAiServices.js";
 import user from "../models/user.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 
 export const createCampaign = async (req, res) => {
@@ -116,15 +117,15 @@ export const removeCreator = async (req, res) => {
             null
         );
 
-        await NotificationService.sendContentEmail({
-            userId: req.params.creatorId,
-            params: {
-                title: `You've been removed from the "${campaign.title}" campaign`,
-                content: "If you have any questions, feel free to reach out!",
-                button: "Contact us",
-                link: null
-            }
-        });
+        // await NotificationService.sendContentEmail({
+        //     userId: req.params.creatorId,
+        //     params: {
+        //         title: `You've been removed from the "${campaign.title}" campaign`,
+        //         content: "If you have any questions, feel free to reach out!",
+        //         button: "Contact us",
+        //         link: null
+        //     }
+        // });
 
         res.status(200).json(campaign);
     } catch (error) {
@@ -144,15 +145,15 @@ export const selectCreator = async (req, res) => {
             "/dashboard/campaigns-details/" + req.params.campaignId,
         );
 
-        await NotificationService.sendContentEmail({
-            userId: req.body.creatorId,
-            params: {
-                title: `🎉 Great news!`,
-                content: `You have been selected for the campaign "${campaign.title}"`,
-                button: "View Campaign",
-                link: "/dashboard/campaigns-details/" + req.params.campaignId
-            }
-        });
+        // await NotificationService.sendContentEmail({
+        //     userId: req.body.creatorId,
+        //     params: {
+        //         title: `🎉 Great news!`,
+        //         content: `You have been selected for the campaign "${campaign.title}"`,
+        //         button: "View Campaign",
+        //         link: "/dashboard/campaigns-details/" + req.params.campaignId
+        //     }
+        // });
 
         res.status(200).json(campaign);
     } catch (error) {
@@ -250,18 +251,7 @@ export const acceptCreator = async (req, res) => {
             `🎉 Great news! You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
         );
 
-        // send email to creator
-        await NotificationService.sendContentEmail(
-            {
-                userId: req.params.creatorId,
-                params: {
-                    title: `🎉 Great news!`,
-                    content: `You have been ${req.params.status === "approved" ? "accepted" : "rejected"} for the campaign "${campaign.title}"`,
-                    button: "View Campaign",
-                    link: "/dashboard/campaigns-details/" + req.params.campaignId
-                }
-            }
-        );
+
 
         // send using i
 
@@ -303,17 +293,19 @@ export const acceptWork = async (req, res) => {
             `🎉 Great news! Your work for the "${campaign.title}" campaign has been accepted by the brand and shared on LinkedIn!`,
         );
 
-        await NotificationService.sendContentEmail(
-            {
-                userId: req.params.creatorId,
-                params: {
-                    title: `🎉 Great news!`,
-                    content: `Your work for the campaign "${campaign.title}" has been accepted`,
-                    button: "View Campaign",
-                    link: "/dashboard/campaigns-details/" + req.params.campaignId
-                }
-            }
-        );
+        // await NotificationService.sendContentEmail(
+        //     {
+        //         userId: req.params.creatorId,
+        //         params: {
+        //             title: `🎉 Great news!`,
+        //             content: `Your work for the campaign "${campaign.title}" has been accepted`,
+        //             button: "View Campaign",
+        //             link: "/dashboard/campaigns-details/" + req.params.campaignId
+        //         }
+        //     }
+        // );
+
+
 
         res.status(200).json(campaign);
     } catch (error) {

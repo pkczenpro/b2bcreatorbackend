@@ -13,7 +13,7 @@ const NotificationService = {
         });
         const populatedNotification = await Notification.findById(notification._id)
             .populate("sender", "name email")
-        io.to(receiverId.toString()).emit('newNotification', populatedNotification);
+        io.to(receiverId?.toString()).emit('newNotification', populatedNotification);
     },
 
     async sendContentEmail(data) {

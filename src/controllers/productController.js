@@ -2,10 +2,13 @@ import product from "../models/product.js";
 import UserRepository from "../repositories/userRepository.js";
 import productService from "../services/productService.js";
 import userService from "../services/userService.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 const productController = {
     createProduct: async (req, res) => {
         try {
+            const user = await UserRepository.findUserById(req.user.id);
+
             const {
                 productName,
                 publicVisibility,
@@ -60,6 +63,27 @@ const productController = {
             });
 
             await newProduct.save();
+
+
+            // send email to creator
+            try {
+                await sendEmail({
+                    to: [{ email: user.email }],
+                    templateId: 11, // Update with your email template ID
+                    params: {
+                        name: user.name,
+                        productName,
+                        productLink: `https://app.linkedcreator.com/dashboard/brand-preview/${user.id}`,
+                        brandProfileLink: `https://app.linkedcreator.com/dashboard/brand-preview/${user.id}`,
+                    },
+                });
+            } catch (error) {
+                console.error("Error sending welcome email:", error.message);
+            }
+
+
+
+
             return res.status(201).json({ message: "Product created successfully!", product: newProduct });
 
         } catch (error) {

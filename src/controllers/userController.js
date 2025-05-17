@@ -257,26 +257,27 @@ const UserController = {
         try {
             const response = await UserService.followBrand(req, res);
 
-            await NotificationService.sendNotification({
-                io: req.app.get("io"),
-                senderId: req.user.id,
-                receiverId: req.params.brandId,
-                message: `🙌 You’ve got a new follower — ${response.profileName}!`,
-                link: null,
-            });
+            // await NotificationService.sendNotification({
+            //     io: req.app.get("io"),
+            //     senderId: req.user.id,
+            //     receiverId: req.params.brandId,
+            //     message: `🙌 You’ve got a new follower — ${response.profileName}!`,
+            //     link: null,
+            // });
 
-            await NotificationService.sendContentEmail({
-                userId: req.params.brandId,
-                params: {
-                    title: "New Follower",
-                    content: `🙌 You’ve got a new follower — ${response.profileName}!`,
-                    link: null,
-                    button: null,
-                },
-            });
+            // await NotificationService.sendContentEmail({
+            //     userId: req.params.brandId,
+            //     params: {
+            //         title: "New Follower",
+            //         content: `🙌 You’ve got a new follower — ${response.profileName}!`,
+            //         link: null,
+            //         button: null,
+            //     },
+            // });
 
             res.json(response);
         } catch (error) {
+            console.log(error)
             res.status(400).json({ error: error.message });
         }
     },

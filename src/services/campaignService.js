@@ -9,6 +9,7 @@ import product from "../models/product.js";
 import campaignRepository from "../repositories/campaignRepository.js";
 import user from "../models/user.js";
 import Invoice from "../models/invoice.js";
+import { sendEmail } from "../utils/sendEmail.js";
 const ObjectId = mongoose.Types.ObjectId;
 
 const CampaignService = {
@@ -116,6 +117,7 @@ const CampaignService = {
      */
     async applyToCampaign(req, campaignId, creatorId, amount) {
         const campaign = await Campaign.findById(campaignId);
+        const user = await User.findById(creatorId);
         if (!campaign) throw new Error("Campaign not found");
 
         // Check if creator already applied
@@ -144,15 +146,19 @@ const CampaignService = {
             "/dashboard/campaigns-details/" + campaignId,
         );
 
-        await NotificationService.sendContentEmail({
-            userId: campaign.brandId._id,
-            params: {
-                title: "New Campaign Application",
-                content: `A new creator has applied to your campaign: ${campaign.title}`,
-                link: "/dashboard/campaigns-details/" + campaignId,
-                button: "View Campaign",
-            },
-        })
+        try {
+            await sendEmail({
+                to: [{ email: user.email }],
+                templateId: 6, // Update with your email template ID
+                params: {
+                    name: user.name,
+                    campaignName: campaign.title,
+                    link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                },
+            });
+        } catch (error) {
+            console.error("Error sending welcome email:", error.message);
+        }
 
         return campaign;
     },
@@ -225,13 +231,13 @@ const CampaignService = {
         // Check if the creator is selected
         const creatorObjectId = new ObjectId(creatorId);
         const selectedCreator = campaign.selectedCreators.find(
-            (c) => c.creatorId.toString() === creatorObjectId.toString()
+            (c) => c.creatorId?._id?.toString() === creatorObjectId.toString()
         );
         if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
 
         // Remove creator
         campaign.selectedCreators = campaign.selectedCreators.filter(
-            (c) => c.creatorId.toString() !== creatorObjectId.toString()
+            (c) => c.creatorId?._id?.toString() !== creatorObjectId.toString()
         );
 
 
@@ -291,7 +297,7 @@ const CampaignService = {
 
         // Find the creator in the selectedCreators list
         const selectedCreator = campaign.selectedCreators.find(
-            (c) => c.creatorId.toString() === creatorId
+            (c) => c.creatorId?._id?.toString() === creatorId
         );
         if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
 
@@ -319,7 +325,10 @@ const CampaignService = {
         return creator;
     },
     async acceptCreator(campaignId, creatorId, status) {
-        const campaign = await Campaign.findById(campaignId);
+        const campaign = await Campaign.findById(campaignId)
+            .populate("brandId", "name email profileImage socialMediaLinks category subCategory")
+            .populate("selectedCreators.creatorId", "name email profileImage reviews");
+        const user = await User.findById(creatorId);
         if (!campaign) throw new Error("Campaign not found");
 
         // Find the creator i   n the selectedCreators list
@@ -332,6 +341,23 @@ const CampaignService = {
         selectedCreator.approved = true;
 
         await campaign.save();
+
+        // send email to creator
+        try {
+            await sendEmail({
+                to: [{ email: user.email }],
+                templateId: 7, // Update with your email template ID
+                params: {
+                    name: user.name,
+                    campaignName: campaign.title,
+                    brandName: campaign.brandId.profileName,
+                    link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                },
+            });
+        } catch (error) {
+            console.error("Error sending welcome email:", error.message);
+        }
+
         return campaign;
     },
     async submitWork(req, campaignId, creatorId, content) {
@@ -359,12 +385,15 @@ const CampaignService = {
 
         if (isCampaign) {
             // Check if campaign exists
-            const campaign = await Campaign.findById(campaignId);
+            const campaign = await Campaign.findById(campaignId)
+                .populate("brandId", "name email profileImage socialMediaLinks category subCategory")
+                .populate("selectedCreators.creatorId", "name email profileImage reviews");
+
             if (!campaign) throw new Error("Campaign not found");
 
             // Find the creator in the selectedCreators list
             const selectedCreator = campaign.selectedCreators.find(
-                (c) => c.creatorId?.toString() === creatorId
+                (c) => c.creatorId?._id?.toString() === creatorId
             );
             if (!selectedCreator) throw new Error("Creator is not selected for this campaign");
 
@@ -391,15 +420,15 @@ const CampaignService = {
                 "/dashboard/campaigns-details/" + campaignId,
             );
 
-            await NotificationService.sendContentEmail({
-                userId: req.params.creatorId,
-                params: {
-                    title: "Campaign Content Submission",
-                    content: `You have submitted your work for the campaign "${campaign.title}"`,
-                    link: "/dashboard/campaigns-details/" + campaignId,
-                    button: "View Campaign",
-                },
-            })
+            // await NotificationService.sendContentEmail({
+            //     userId: req.params.creatorId,
+            //     params: {
+            //         title: "Campaign Content Submission",
+            //         content: `You have submitted your work for the campaign "${campaign.title}"`,
+            //         link: "/dashboard/campaigns-details/" + campaignId,
+            //         button: "View Campaign",
+            //     },
+            // })
             // Send notification to the brand
             await NotificationService.sendNotification(
                 req.app.get('io'),
@@ -408,15 +437,31 @@ const CampaignService = {
                 `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
                 "/dashboard/campaigns-details/" + campaignId,
             );
-            await NotificationService.sendContentEmail({
-                userId: campaign.brandId._id,
-                params: {
-                    title: "New Campaign Content Submission",
-                    content: `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
-                    link: "/dashboard/campaigns-details/" + campaignId,
-                    button: "View Campaign",
-                },
-            })
+            // await NotificationService.sendContentEmail({
+            //     userId: campaign.brandId._id,
+            //     params: {
+            //         title: "New Campaign Content Submission",
+            //         content: `The creator "${user.name}" has submitted their work for the campaign "${campaign.title}"`,
+            //         link: "/dashboard/campaigns-details/" + campaignId,
+            //         button: "View Campaign",
+            //     },
+            // })
+
+            // send email to creator
+            try {
+                await sendEmail({
+                    to: [{ email: campaign.brandId.email }],
+                    templateId: 8, // Update with your email template ID
+                    params: {
+                        name: user.name,
+                        brandName: campaign.brandId.profileName,
+                        campaignName: campaign.title,
+                        link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                    },
+                });
+            } catch (error) {
+                console.error("Error sending welcome email:", error.message);
+            }
 
 
         }
@@ -439,11 +484,14 @@ const CampaignService = {
     },
 
     async acceptWork(campaignId, creatorId, postId) {
-        const campaign = await Campaign.findById(campaignId);
+        const campaign = await Campaign.findById(campaignId)
+            .populate("brandId", "name email profileImage socialMediaLinks category subCategory")
+            .populate("selectedCreators.creatorId", "name email profileImage reviews");
+
         if (!campaign) throw new Error("Campaign not found");
 
         const selectedCreator = campaign.selectedCreators.find(
-            (c) => c.creatorId.toString() === creatorId
+            (c) => c.creatorId?._id?.toString() === creatorId
         );
 
         const user = await User.findById(creatorId);
@@ -513,6 +561,23 @@ const CampaignService = {
 
 
         await campaign.save();
+
+        // send email to creator
+        try {
+            await sendEmail({
+                to: [{ email: user.email }],
+                templateId: 9, // Update with your email template ID
+                params: {
+                    name: campaign.selectedCreators.creatorId.name,
+                    campaignName: campaign.title,
+                    brandName: campaign.brandId.profileName,
+                    link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                },
+            });
+        } catch (error) {
+            console.error("Error sending welcome email:", error.message);
+        }
+
         return campaign;
     },
 
@@ -681,7 +746,7 @@ const CampaignService = {
 
         // Find the creator in the selectedCreators list
         const selectedCreator = campaign.selectedCreators.find(
-            (c) => c.creatorId.toString() === creatorId
+            (c) => c.creatorId?._id?.toString() === creatorId
         );
 
         console.log(selectedCreator);

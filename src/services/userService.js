@@ -47,8 +47,8 @@ const UserService = {
         try {
             await sendEmail({
                 to: [{ email }],
-                templateId: 1, // Update with your email template ID
-                params: { link: verificationLink },
+                templateId: userType === "brand" ? 4 : 1, // Update with your email template ID
+                params: { link: verificationLink, name: name },
             });
 
             // If email is sent successfully, now save the user to the database
@@ -80,7 +80,7 @@ const UserService = {
         try {
             await sendEmail({
                 to: [{ email: updatedUser.email }],
-                templateId: 2, // Update with your email template ID
+                templateId: user.userType === "brand" ? 12 : 5, // Update with your email template ID
                 params: { name: updatedUser.name },
             });
         } catch (error) {

@@ -1,5 +1,6 @@
 import Message from '../models/message.js';
 import User from '../models/user.js';
+import { sendEmail } from '../utils/sendEmail.js';
 
 const MessageService = {
 
@@ -27,6 +28,11 @@ const MessageService = {
 
     async saveMessage(req, sender, receiver, message) {
         try {
+            const creator = await User.findById(sender);
+            // console.log("creator", creator);
+            const brand = await User.findById(receiver);
+            // console.log("brand", brand);
+
             const newMessage = new Message({
                 sender,
                 receiver,
@@ -42,7 +48,6 @@ const MessageService = {
             await newMessage.save();
             const io = req.app.get('io');
             if (io) {
-             
                 io.to(receiver.toString()).emit('message', {
                     from: sender,
                     text: message,
@@ -50,6 +55,22 @@ const MessageService = {
                     createdAt: newMessage.timestamp,
                     isFirstMessage: !isFirstMessage,
                 });
+            }
+
+            // send email to creator
+            try {
+                await sendEmail({
+                    to: [{ email: brand.email }],
+                    templateId: 10, // Update with your email template ID
+                    params: {
+                        from: `${brand.name}`,
+                        to: `${creator.name}`,
+                        message: message,
+                        link: `${process.env.DOMAIN}/chat/${sender}/${receiver}`,
+                    },
+                });
+            } catch (error) {
+                console.error("Error sending welcome email:", error.message);
             }
 
             return newMessage;
@@ -209,7 +230,7 @@ const MessageService = {
             await newMessage.save();
             const io = req.app.get('io');
             if (io) {
-              
+
                 io.to(receiver.toString()).emit('message', {
                     from: sender,
                     text: filePath,
