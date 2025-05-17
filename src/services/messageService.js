@@ -66,7 +66,7 @@ const MessageService = {
                         from: `${brand.name}`,
                         to: `${creator.name}`,
                         message: message,
-                        link: `${process.env.DOMAIN}/chat/${sender}/${receiver}`,
+                        link: `https://app.demandnest.com/`,
                     },
                 });
             } catch (error) {

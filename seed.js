@@ -1,161 +1,58 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { faker } from "@faker-js/faker";
-import User from "./src/models/User.js";
-import Product from "./src/models/Product.js";
-import Campaign from "./src/models/Campaign.js";
-import bcrypt from "bcrypt";
+import User from "./src/models/user.js";
+import Product from "./src/models/product.js";
+import Campaign from "./src/models/campaign.js";
+import Message from "./src/models/message.js";
+import Invoice from "./src/models/invoice.js";
+import Notification from "./src/models/notification.js";
+import ScheduledPost from "./src/models/scheduledPost.js";
+
 dotenv.config();
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}).then(() => console.log("MongoDB Connected"))
-    .catch(err => console.error(err));
+const flushDBPreservingUsers = async () => {
+    const excludedUserIds = [
+        "680aa2d6040ce9a7aa52192d",
+        "67e679d85250b70adfe252aa",
+        "67ea69317d5d16fdbae9960a",
+        "6819d0be749adb17d762c270",
+        "67dfd4c998ec7b91dc8d0fdc",
+        "67f82cfec24c574e8e15e395",
+        "682783c11e11d28c9bf73528",
+        "67e67bfc5250b70adfe25bc1"
+    ];
 
-// Generate Random Users
-const generateUsers = (num) => {
-    return Array.from({ length: num }, () => ({
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-        password: bcrypt.hashSync("test", 10),
-        isCompletedOnboarding: faker.datatype.boolean(),
-        userType: faker.helpers.arrayElement(["creator", "brand"]),
-        profileName: faker.internet.userName(),
-        profileImage: faker.image.avatar(),
-        coverImage: faker.image.urlPicsumPhotos(),
-        socialMediaLinks: [
-            { platform: "twitter", link: faker.internet.url() },
-            { platform: "linkedin", link: faker.internet.url() }
-        ],
-        bio: faker.person.bio(),
-        tags: faker.helpers.arrayElements(["tech", "startup", "developer", "marketing"], 2),
-        location: faker.location.city(),
-        reviews: [],
-        services: [
-            {
-                title: faker.company.name(),
-                description: faker.lorem.sentence(),
-                price: faker.number.int({ min: 10, max: 100 }),
-                basis: "hourly"
-            }
-        ],
-        previousWork: [
-            {
-                image: faker.image.url(),
-                title: faker.commerce.productName(),
-                description: faker.lorem.sentence(),
-                url: faker.internet.url()
-            }
-        ],
-        stats: [{ title: "Projects Completed", value: faker.number.int({ min: 1, max: 50 }) }],
-        calendar: [{ title: "Client Meeting", date: faker.date.future(), color: faker.color.rgb() }],
-        isCompletedOnboarding: faker.datatype.boolean(),
-    }));
-};
-
-// Generate Random Products
-const generateProducts = (num, brandId) => {
-    return Array.from({ length: num }, () => ({
-        brandId,
-        productName: faker.commerce.productName(),
-        productLogo: faker.image.url(),
-        publicVisibility: faker.datatype.boolean(),
-        productDescription: faker.commerce.productDescription(),
-        productImages: [faker.image.url()],
-        productLink: faker.internet.url(),
-        loomVideoLink: faker.internet.url(),
-        g2Link: faker.internet.url(),
-        capterraLink: faker.internet.url(),
-        additionalDetails: faker.lorem.paragraph(),
-        productHunt: faker.internet.url()
-    }));
-};
-
-// Generate Random Campaigns
-const generateCampaigns = (num, brandId) => {
-    return Array.from({ length: num }, () => ({
-        brandId,
-        title: faker.company.buzzPhrase(),
-        description: faker.lorem.paragraph(),
-        tags: faker.helpers.arrayElements(["tech", "innovation", "marketing", "business"], 2),
-        contentType: faker.helpers.arrayElements(["video", "blog", "podcast"], 2),
-        goalsAndDeliverables: faker.lorem.sentence(),
-        status: "active",
-        startDate: faker.date.past(),
-        endDate: faker.date.future(),
-        budget: faker.number.int({ min: 1000, max: 10000 }),
-        coverImage: faker.image.url(),
-        appliedCreators: [],
-        selectedCreators: []
-    }));
-};
-
-// Function to seed data
-const seedDB = async () => {
     try {
-        // Clear existing data
-        await User.deleteMany();
-        await Product.deleteMany();
-        await Campaign.deleteMany();
-        console.log("Existing data cleared!");
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
 
-        // Insert users
-        const users = generateUsers(50);
-        const insertedUsers = await User.insertMany(users);
-        console.log("Users seeded!");
+        const excludedObjectIds = excludedUserIds.map(id => new mongoose.Types.ObjectId(id));
 
-        // Get all brands
-        const brandUsers = insertedUsers.filter(user => user.userType === "brand");
-        const selectedCreators = insertedUsers.filter(user => user.userType === "creator");
-        const appliedCreators = selectedCreators.map(creator => ({
-            creatorId: creator._id,
-            status: faker.helpers.arrayElement(["pending", "approved", "rejected"]),
-            amount: faker.number.int({ min: 100, max: 1000 }),
-        }));
+        // Delete all users EXCEPT the excluded ones
+        await User.deleteMany({ _id: { $nin: excludedObjectIds } });
 
-        let allCampaigns = [];
-        let allProducts = [];
+        // Delete all products and campaigns
+        await Product.deleteMany({
+            brandId: { $nin: excludedObjectIds }
+        });
 
-        for (const brand of brandUsers) {
-            // Generate products and campaigns for each brand
-            const products = generateProducts(5, brand._id);
-            allProducts.push(...products);
+        await Message.deleteMany({});
+        await Invoice.deleteMany({});
+        await Notification.deleteMany({});
+        await ScheduledPost.deleteMany({});
+        await Campaign.deleteMany({});
 
-            let campaigns = generateCampaigns(3, brand._id);
-            campaigns = campaigns.map(campaign => {
-                const randomCreators = faker.helpers.arrayElements(selectedCreators, 3);
-                return {
-                    ...campaign,
-                    selectedCreators: randomCreators.map(creator => ({
-                        creatorId: creator._id,
-                        status: faker.helpers.arrayElement(["pending", "declined", "active", "approved"]),
-                        amount: faker.number.int({ min: 100, max: 1000 }),
-                    })),
-                    appliedCreators: appliedCreators
-                };
-            });
 
-            allCampaigns.push(...campaigns);
-        }
 
-        // Insert all products and campaigns
-        await Product.insertMany(allProducts);
-        console.log("Products seeded!");
+        console.log("Database flushed, preserved specified users.");
 
-        await Campaign.insertMany(allCampaigns);
-        console.log("Campaigns seeded!");
-
-        // Close connection
-        mongoose.connection.close();
-        console.log("Database seeding complete!")
-            
+        await mongoose.disconnect();
     } catch (err) {
-        console.error("Error seeding database:", err);
-        mongoose.connection.close();
+        console.error("Error flushing database:", err);
+        await mongoose.disconnect();
     }
 };
 
-// Run the seed function
-seedDB();
+flushDBPreservingUsers();
