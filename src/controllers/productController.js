@@ -73,8 +73,8 @@ const productController = {
                     params: {
                         name: user.name,
                         productName,
-                        productLink: `https://app.linkedcreator.com/dashboard/brand-preview/${user.id}`,
-                        brandProfileLink: `https://app.linkedcreator.com/dashboard/brand-preview/${user.id}`,
+                        productLink: `https://app.demandnest.com/dashboard/brand-preview/${user.id}`,
+                        brandProfileLink: `https://app.demandnest.com/dashboard/brand-preview/${user.id}`,
                     },
                 });
             } catch (error) {

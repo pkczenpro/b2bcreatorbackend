@@ -153,7 +153,7 @@ const CampaignService = {
                 params: {
                     name: user.name,
                     campaignName: campaign.title,
-                    link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                    link: `https://app.demandnest.com/dashboard/campaigns-details/${campaignId}`
                 },
             });
         } catch (error) {
@@ -351,7 +351,7 @@ const CampaignService = {
                     name: user.name,
                     campaignName: campaign.title,
                     brandName: campaign.brandId.profileName,
-                    link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                    link: `https://app.demandnest.com/dashboard/campaigns-details/${campaignId}`
                 },
             });
         } catch (error) {
@@ -456,7 +456,7 @@ const CampaignService = {
                         name: user.name,
                         brandName: campaign.brandId.profileName,
                         campaignName: campaign.title,
-                        link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                        link: `https://app.demandnest.com/dashboard/campaigns-details/${campaignId}`
                     },
                 });
             } catch (error) {
@@ -571,7 +571,7 @@ const CampaignService = {
                     name: campaign.selectedCreators.creatorId.name,
                     campaignName: campaign.title,
                     brandName: campaign.brandId.profileName,
-                    link: `https://app.linkedcreator.com/dashboard/campaigns-details/${campaignId}`
+                    link: `https://app.demandnest.com/dashboard/campaigns-details/${campaignId}`
                 },
             });
         } catch (error) {
