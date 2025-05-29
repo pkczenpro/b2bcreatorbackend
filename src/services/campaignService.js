@@ -372,12 +372,18 @@ const CampaignService = {
 
 
         //todo frontend part if no access token redirect to get linkedin token
-        if (user?.linkedin?.access_token === null || user?.linkedin?.access_token === undefined) {
+        if (
+            !user?.linkedin?.access_token ||
+            (user?.linkedin?.expires_in && user.updatedAt &&
+                new Date(user.updatedAt.getTime() + user.linkedin.expires_in * 1000) < new Date())
+        ) {
             return {
-                message: "Creator has not linked their LinkedIn account",
+                message: "Creator has not linked their LinkedIn account or token has expired",
                 error_code: 400,
             };
         }
+
+
 
         const isCampaign = req.body.isCampaign === "1";
         const isIndependent = req.body.isCampaign === "0";
